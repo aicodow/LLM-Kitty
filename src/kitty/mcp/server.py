@@ -108,7 +108,7 @@ async def _eval_tool(params: dict[str, Any]) -> dict[str, Any]:
         return {"error": "Missing required parameter: config"}
 
     try:
-        from promptfoo import evaluate  # type: ignore[import-untyped]
+        from promptfoo import evaluate  # type: ignore[import-not-found]
     except ImportError:
         return {"error": "promptfoo is not installed; cannot run eval"}
 
@@ -137,7 +137,7 @@ async def _redteam_run_tool(params: dict[str, Any]) -> dict[str, Any]:
         return {"error": "Missing required parameter: config"}
 
     try:
-        from promptfoo.redteam import run  # type: ignore[import-untyped]
+        from promptfoo.redteam import run  # type: ignore[import-not-found]
     except ImportError:
         return {"error": "promptfoo redteam module is not available"}
 

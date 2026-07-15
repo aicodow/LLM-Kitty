@@ -118,9 +118,9 @@ async def run_guardrail_assertions(
         passed=all_passed,
         score=worst_score if not all_passed else 1.0,
         reason="; ".join(filter(None, reasons)),
-        namedScores=named_scores,
-        tokensUsed=tokens_used,
-        componentResults=component_results,
+        named_scores=named_scores,
+        tokens_used=tokens_used,
+        component_results=component_results,
     )
 
 
@@ -157,7 +157,6 @@ async def _run_guardrail_single(
         optionally ``namedScores``.
     """
     assertion_type = assertion.get("type", "guardrails").lower()
-    response.output.lower()
 
     # Determine the categories to check.
     categories = _resolve_categories(assertion_type, assertion.get("value"))
@@ -166,17 +165,17 @@ async def _run_guardrail_single(
     from_config = _get_moderation_config(assertion, registry)
     if from_config is not None:
         return await _check_via_moderation_api(
-            prompt=prompt,
-            response=response,
-            categories=categories,
-            config=from_config,
+            _prompt=prompt,
+            _response=response,
+            _categories=categories,
+            _config=from_config,
         )
 
     # Fall back to keyword-based detection.
     return _check_via_keywords(
         output=response.output,
         categories=categories,
-        assertion=assertion,
+        _assertion=assertion,
     )
 
 

@@ -59,7 +59,7 @@ class PluginRegistry:
     ]
 
     _manifests: ClassVar[dict[str, PluginManifest]] = {}
-    _plugins: ClassVar[dict[str, RedteamPluginBase]] = {}
+    _plugins: ClassVar[dict[str, type[RedteamPluginBase]]] = {}
 
     # ------------------------------------------------------------------
     # Discovery
@@ -223,7 +223,7 @@ class PluginRegistry:
                 id=plugin_id,
                 label=item.get("label", plugin_id),
                 description=item.get("description", ""),
-                category=item.get("category", global_category),
+                category=item.get("category") or global_category,
                 severity=severity,
                 tags=item.get("tags", []),
                 templates=item.get("templates", []),
@@ -242,7 +242,7 @@ class PluginRegistry:
     def _load_python_plugin(
         cls,
         directory: Path,
-        _default_category: str = "custom",
+        default_category: str = "custom",  # noqa: ARG003
     ) -> None:
         """Import a Python plugin package from a directory.
 
@@ -334,7 +334,7 @@ class PluginRegistry:
                 plugin = factory(manifest=manifest)
             else:
                 plugin = factory()
-                plugin.manifest = manifest  # type: ignore[assignment]
+                plugin.manifest = manifest
         else:
             raise TypeError(f"Invalid plugin factory for {plugin_id}: {type(factory)}")
 

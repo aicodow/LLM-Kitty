@@ -121,9 +121,9 @@ async def run_assertions(
         passed=all_passed,
         score=avg_score,
         reason="; ".join(filter(None, reasons)),
-        namedScores=named_scores,
-        tokensUsed=tokens_used,
-        componentResults=component_results,
+        named_scores=named_scores,
+        tokens_used=tokens_used,
+        component_results=component_results,
     )
 
 

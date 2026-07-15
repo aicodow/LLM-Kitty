@@ -137,7 +137,7 @@ class HttpProvider(BaseProvider):
             output=output,
             token_usage={},
             cached=False,
-            metadata=data,
+            metadata=data or {},
         )
 
     @staticmethod

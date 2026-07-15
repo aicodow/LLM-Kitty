@@ -264,7 +264,7 @@ class EvaluationPipeline:
                     cases.append(
                         TestCase(
                             prompt=rendered,
-                            assertions=list(assertions_raw),
+                            assertions=assertions_raw,  # type: ignore[arg-type]
                             vars=vars_dict,
                             metadata=dict(metadata),
                         )
@@ -274,7 +274,7 @@ class EvaluationPipeline:
                 cases.append(
                     TestCase(
                         prompt=rendered,
-                        assertions=list(assertions_raw),
+                        assertions=assertions_raw,  # type: ignore[arg-type]
                         vars={},
                         metadata=dict(metadata),
                     )
