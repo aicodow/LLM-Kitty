@@ -95,9 +95,7 @@ class ProviderRegistry:
         )
         self.register(
             "anthropic:messages",
-            _lazy_import(
-                "kitty.providers.anthropic.messages", "AnthropicMessagesProvider"
-            ),
+            _lazy_import("kitty.providers.anthropic.messages", "AnthropicMessagesProvider"),
         )
         self.register(
             "google:gemini",
@@ -201,21 +199,15 @@ class ProviderRegistry:
         self._instances.clear()
 
         if errors:
-            messages = "; ".join(
-                f"{key}: {exc}" for key, exc in errors
-            )
-            raise RuntimeError(
-                f"Errors during provider shutdown: {messages}"
-            )
+            messages = "; ".join(f"{key}: {exc}" for key, exc in errors)
+            raise RuntimeError(f"Errors during provider shutdown: {messages}")
 
     # ------------------------------------------------------------------
     # Utilities
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _cache_key(
-        provider_id: str, config: dict[str, Any] | None
-    ) -> str:
+    def _cache_key(provider_id: str, config: dict[str, Any] | None) -> str:
         """Compute a deterministic cache key.
 
         Secret keys are stripped before hashing so that two instances
@@ -223,11 +215,7 @@ class ProviderRegistry:
         configuration share the same cache slot (callers are responsible
         for isolating credentials at a higher layer).
         """
-        safe = {
-            k: v
-            for k, v in (config or {}).items()
-            if not _is_secret_key(k)
-        }
+        safe = {k: v for k, v in (config or {}).items() if not _is_secret_key(k)}
         canonical = json.dumps(safe, sort_keys=True)
         digest = hashlib.sha256(canonical.encode()).hexdigest()[:16]
         return f"{provider_id}:{digest}"

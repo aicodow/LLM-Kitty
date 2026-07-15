@@ -147,16 +147,12 @@ class EvaluationPipeline:
             elapsed_ms = int((time.monotonic() - started_at) * 1000)
             # `results` is defined in the try block; if an interrupt
             # happened before assignment, use an empty list.
-            final_results: list[dict[str, Any]] = (
-                locals().get("results", [])  # type: ignore[assignment]
-            )
+            final_results: list[dict[str, Any]] = locals().get("results", [])  # type: ignore[assignment]
             stats = self._compute_stats(final_results, elapsed_ms)
             await self._shutdown_providers()
             self._restore_signal_handler()
 
-        eval_id = (
-            f"eval_{time.strftime('%Y%m%d_%H%M%S', time.gmtime(started_at))}"
-        )
+        eval_id = f"eval_{time.strftime('%Y%m%d_%H%M%S', time.gmtime(started_at))}"
         logger.info(
             "evaluation_completed",
             eval_id=eval_id,
@@ -364,11 +360,7 @@ class EvaluationPipeline:
                 return await self._execute_single(tc, provider)
 
         # Flatten test_cases × providers into a list of tasks.
-        tasks = [
-            _run_one(tc, provider)
-            for tc in test_cases
-            for provider in providers
-        ]
+        tasks = [_run_one(tc, provider) for tc in test_cases for provider in providers]
 
         if not tasks:
             return results
@@ -382,9 +374,7 @@ class EvaluationPipeline:
             )
         except asyncio.TimeoutError:
             self._interrupted = True
-            raise EvalTimeoutError(
-                f"Evaluation timed out after {timeout_sec:.0f}s"
-            )
+            raise EvalTimeoutError(f"Evaluation timed out after {timeout_sec:.0f}s")
 
         for item in gathered:
             if isinstance(item, BaseException):
@@ -572,9 +562,7 @@ class EvaluationPipeline:
                 errors += 1
 
             provider_resp = r.get("provider_response")
-            if provider_resp is not None and isinstance(
-                provider_resp, ProviderResponse
-            ):
+            if provider_resp is not None and isinstance(provider_resp, ProviderResponse):
                 total_tokens += provider_resp.token_usage.get("total", 0)
                 if provider_resp.cost is not None:
                     total_cost += provider_resp.cost

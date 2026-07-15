@@ -24,6 +24,7 @@ class BaseModel(_PydanticBaseModel):
 
 # ── Target Configuration ─────────────────────────────────────────────────
 
+
 class TargetConfig(BaseModel):
     """Configuration for a single evaluation target.
 
@@ -42,6 +43,7 @@ class TargetConfig(BaseModel):
 
 # ── Evaluation Options ───────────────────────────────────────────────────
 
+
 class EvaluateOptions(BaseModel):
     """Runtime options controlling evaluation execution behaviour.
 
@@ -57,26 +59,19 @@ class EvaluateOptions(BaseModel):
         filter_sample_seed: Seed for reproducible random sampling.
     """
 
-    max_concurrency: int = Field(
-        default=4, ge=1, le=20, alias="maxConcurrency"
-    )
+    max_concurrency: int = Field(default=4, ge=1, le=20, alias="maxConcurrency")
     timeout_ms: int = Field(default=30000, alias="timeoutMs")
     max_eval_time_ms: int = Field(default=300000, alias="maxEvalTimeMs")
     cache: bool = True
     delay: int = 0
     show_progress_bar: bool = Field(default=True, alias="showProgressBar")
-    filter_first_n: Optional[int] = Field(
-        default=None, alias="filterFirstN"
-    )
-    filter_sample: Optional[int] = Field(
-        default=None, alias="filterSample"
-    )
-    filter_sample_seed: Optional[int] = Field(
-        default=None, alias="filterSampleSeed"
-    )
+    filter_first_n: Optional[int] = Field(default=None, alias="filterFirstN")
+    filter_sample: Optional[int] = Field(default=None, alias="filterSample")
+    filter_sample_seed: Optional[int] = Field(default=None, alias="filterSampleSeed")
 
 
 # ── Red Team Configuration ───────────────────────────────────────────────
+
 
 class RedteamPluginRef(BaseModel):
     """Reference to a red-team plugin with optional overrides.
@@ -116,6 +111,7 @@ class RedteamConfig(BaseModel):
 
 # ── Tracing Configuration ────────────────────────────────────────────────
 
+
 class TracingConfig(BaseModel):
     """Configuration for observability / tracing of evaluation runs.
 
@@ -132,6 +128,7 @@ class TracingConfig(BaseModel):
 
 # ── Output Configuration ─────────────────────────────────────────────────
 
+
 class OutputConfig(BaseModel):
     """Configuration for a single output destination.
 
@@ -145,6 +142,7 @@ class OutputConfig(BaseModel):
 
 
 # ── Top-Level Configuration ──────────────────────────────────────────────
+
 
 class KittyConfig(BaseModel):
     """Top-level configuration for a Kitty evaluation run.
@@ -179,9 +177,7 @@ class KittyConfig(BaseModel):
     def _require_prompts_tests_or_redteam(self) -> KittyConfig:
         """Ensure at least one of prompts, tests, or redteam is configured."""
         if not self.prompts and not self.tests and self.redteam is None:
-            raise ValueError(
-                "At least one of 'prompts', 'tests', or 'redteam' must be provided."
-            )
+            raise ValueError("At least one of 'prompts', 'tests', or 'redteam' must be provided.")
         return self
 
     @model_validator(mode="after")
@@ -190,9 +186,7 @@ class KittyConfig(BaseModel):
         ids = [t.id for t in self.targets]
         if len(ids) != len(set(ids)):
             duplicates = {i for i in ids if ids.count(i) > 1}
-            raise ValueError(
-                f"Target IDs must be unique; duplicates found: {duplicates}"
-            )
+            raise ValueError(f"Target IDs must be unique; duplicates found: {duplicates}")
         return self
 
     @field_validator("targets")
@@ -201,9 +195,7 @@ class KittyConfig(BaseModel):
         """Ensure each target has a non-empty id after stripping whitespace."""
         for target in v:
             if not target.id.strip():
-                raise ValueError(
-                    "Each target must have a non-empty 'id' field."
-                )
+                raise ValueError("Each target must have a non-empty 'id' field.")
         return v
 
     @classmethod
@@ -224,9 +216,7 @@ class KittyConfig(BaseModel):
 
         resolved = Path(path)
         if not resolved.exists():
-            raise ConfigNotFoundError(
-                f"Configuration file not found: {resolved}"
-            )
+            raise ConfigNotFoundError(f"Configuration file not found: {resolved}")
 
         # Lazy import so PyYAML is an optional dependency.
         try:

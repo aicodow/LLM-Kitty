@@ -116,9 +116,7 @@ def init_tracing(config: TracingConfig) -> None:
     _tracer = trace.get_tracer(config.service_name)
 
 
-def start_span(
-    name: str, attributes: Optional[Dict[str, Any]] = None
-) -> Any:
+def start_span(name: str, attributes: Optional[Dict[str, Any]] = None) -> Any:
     """Start and return a new span.
 
     When tracing is not initialised a no-op span is returned.
@@ -170,9 +168,7 @@ def traced(name: str, **attributes: Any) -> Generator[Any, None, None]:
         yield span
     except Exception:
         span.record_exception()
-        span.set_status(
-            _get_status_error()
-        )
+        span.set_status(_get_status_error())
         raise
     finally:
         end_span(span)

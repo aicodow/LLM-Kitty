@@ -48,16 +48,8 @@ class AnthropicMessagesProvider(BaseProvider):
         """
         super().__init__(provider_id, config)
 
-        api_key = (
-            self.config.get("api_key")
-            or self.config.get("apiKey")
-            or ""
-        )
-        base_url = (
-            self.config.get("base_url")
-            or self.config.get("apiBaseUrl")
-            or DEFAULT_BASE_URL
-        )
+        api_key = self.config.get("api_key") or self.config.get("apiKey") or ""
+        base_url = self.config.get("base_url") or self.config.get("apiBaseUrl") or DEFAULT_BASE_URL
 
         self._client = httpx.AsyncClient(
             base_url=base_url.rstrip("/"),
@@ -131,13 +123,9 @@ class AnthropicMessagesProvider(BaseProvider):
         try:
             response = await self._client.post("/v1/messages", json=payload)
         except httpx.TimeoutException as exc:
-            raise ProviderError(
-                f"Anthropic request timed out: {exc}", status_code=None
-            ) from exc
+            raise ProviderError(f"Anthropic request timed out: {exc}", status_code=None) from exc
         except httpx.RequestError as exc:
-            raise ProviderError(
-                f"Anthropic request failed: {exc}", status_code=None
-            ) from exc
+            raise ProviderError(f"Anthropic request failed: {exc}", status_code=None) from exc
 
         return self._handle_response(response)
 

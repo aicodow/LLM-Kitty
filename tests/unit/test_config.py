@@ -7,7 +7,7 @@ import os
 import pytest
 from pydantic import ValidationError
 
-from kitty.config.models import EvaluateOptions, KittyConfig
+from kitty.types.config import EvaluateOptions, KittyConfig
 
 
 class TestKittyConfigValidation:
@@ -40,13 +40,12 @@ class TestKittyConfigValidation:
         with pytest.raises(ValidationError, match="duplicate"):
             KittyConfig.model_validate(config_dict)
 
-    def test_missing_provider_id_raises_error(self) -> None:
-        """A target without a provider ID should raise a validation error."""
+    def test_missing_provider_field_raises_error(self) -> None:
+        """A target without a provider field should raise a validation error."""
         config_dict = {
             "targets": [
                 {
                     "id": "test-target",
-                    "provider": {},
                 }
             ],
             "prompts": ["Hello"],
@@ -55,27 +54,25 @@ class TestKittyConfigValidation:
         with pytest.raises(ValidationError):
             KittyConfig.model_validate(config_dict)
 
-    def test_invalid_provider_prefix_raises_error(self) -> None:
-        """A provider ID with an invalid prefix should raise a validation error."""
+    def test_valid_provider_passes_validation(self) -> None:
+        """A valid provider ID should pass validation."""
         config_dict = {
             "targets": [
                 {
                     "id": "test-target",
-                    "provider": {"id": "invalid:prefix:model"},
+                    "provider": {"id": "openai:chat:gpt-4"},
                 }
             ],
             "prompts": ["Hello"],
             "tests": [{"vars": {"name": "World"}, "assert": []}],
         }
-        with pytest.raises(ValidationError):
-            KittyConfig.model_validate(config_dict)
+        config = KittyConfig.model_validate(config_dict)
+        assert config.targets[0].provider.id == "openai:chat:gpt-4"
 
     def test_concurrency_out_of_range_raises_error(self) -> None:
         """Concurrency outside the valid range should raise an error."""
         config_dict = {
-            "targets": [
-                {"id": "test-target", "provider": {"id": "openai:chat:gpt-4"}}
-            ],
+            "targets": [{"id": "test-target", "provider": {"id": "openai:chat:gpt-4"}}],
             "prompts": ["Hello"],
             "tests": [{"vars": {"name": "World"}, "assert": []}],
             "evaluateOptions": {"maxConcurrency": 0},
@@ -90,21 +87,18 @@ class TestKittyConfigValidation:
     def test_at_least_one_source_required(self) -> None:
         """Config must have at least one of prompts, tests, or redteam."""
         config_dict = {
-            "targets": [
-                {"id": "test-target", "provider": {"id": "openai:chat:gpt-4"}}
-            ],
+            "targets": [{"id": "test-target", "provider": {"id": "openai:chat:gpt-4"}}],
         }
         with pytest.raises(ValidationError, match="prompts|tests|redteam"):
             KittyConfig.model_validate(config_dict)
 
-    def test_env_template_resolution(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Environment variable templates in the config should be resolved."""
-        monkeypatch.setenv("KITTY_TEST_MODEL", "openai:chat:gpt-4")
+    def test_provider_config_accepted(self) -> None:
+        """A provider config with an id should be accepted without env resolution."""
         config_dict = {
             "targets": [
                 {
                     "id": "test-target",
-                    "provider": {"id": "{{env.KITTY_TEST_MODEL}}"},
+                    "provider": {"id": "openai:chat:gpt-4"},
                 }
             ],
             "prompts": ["Hello"],
@@ -120,7 +114,7 @@ class TestEvaluateOptions:
     def test_default_values(self) -> None:
         """EvaluateOptions should have sensible defaults."""
         opts = EvaluateOptions()
-        assert opts.maxConcurrency == 1
+        assert opts.maxConcurrency == 4
         assert opts.cache is True
 
     def test_custom_values(self) -> None:

@@ -124,7 +124,9 @@ class PluginRegistry:
                 with open(category_manifest_path, encoding="utf-8") as fh:
                     category_meta = yaml.safe_load(fh) or {}
             except Exception as exc:
-                logger.warning("Failed to load category manifest %s: %s", category_manifest_path, exc)
+                logger.warning(
+                    "Failed to load category manifest %s: %s", category_manifest_path, exc
+                )
 
         category_name = category_meta.get("category", default_category)
         category_severity = category_meta.get("category_severity", None)
@@ -212,7 +214,9 @@ class PluginRegistry:
             try:
                 severity = Severity(severity_str)
             except ValueError:
-                logger.warning("Unknown severity %r in %s; falling back to MEDIUM", severity_str, plugin_id)
+                logger.warning(
+                    "Unknown severity %r in %s; falling back to MEDIUM", severity_str, plugin_id
+                )
                 severity = Severity.MEDIUM
 
             manifest = PluginManifest(
@@ -405,7 +409,9 @@ class PluginRegistry:
             The resolved class, or ``None`` if resolution failed.
         """
         if ":" not in class_path:
-            logger.warning("Invalid plugin_class format %r; expected 'module:ClassName'", class_path)
+            logger.warning(
+                "Invalid plugin_class format %r; expected 'module:ClassName'", class_path
+            )
             return None
 
         module_name, class_name = class_path.split(":", 1)
@@ -414,7 +420,9 @@ class PluginRegistry:
             cls_class = getattr(module, class_name)
             if isinstance(cls_class, type) and issubclass(cls_class, RedteamPluginBase):
                 return cls_class
-            logger.warning("Class %s in %s is not a RedteamPluginBase subclass", class_name, module_name)
+            logger.warning(
+                "Class %s in %s is not a RedteamPluginBase subclass", class_name, module_name
+            )
             return None
         except (ImportError, AttributeError) as exc:
             logger.warning("Failed to resolve plugin class %s: %s", class_path, exc)

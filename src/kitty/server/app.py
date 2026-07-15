@@ -81,7 +81,9 @@ class Result(Base):
     __tablename__ = "results"
 
     id = Column(String, primary_key=True, default=_gen_id)
-    eval_id = Column(String, ForeignKey("evaluations.id", ondelete="CASCADE"), index=True, nullable=False)
+    eval_id = Column(
+        String, ForeignKey("evaluations.id", ondelete="CASCADE"), index=True, nullable=False
+    )
     prompt_raw = Column(Text, nullable=True)
     provider_id = Column(String, nullable=True)
     response_output = Column(Text, nullable=True)
@@ -435,12 +437,7 @@ def create_app() -> FastAPI:
         offset: int = Query(0, ge=0),
         session: AsyncSession = Depends(get_session),
     ):
-        stmt = (
-            select(Evaluation)
-            .order_by(Evaluation.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
+        stmt = select(Evaluation).order_by(Evaluation.created_at.desc()).limit(limit).offset(offset)
         rows = (await session.execute(stmt)).scalars().all()
         return [_eval_summary(e) for e in rows]
 
@@ -451,10 +448,14 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404, detail=f"Evaluation {eval_id} not found")
 
         rows = (
-            await session.execute(
-                select(Result).where(Result.eval_id == eval_id).order_by(Result.created_at)
+            (
+                await session.execute(
+                    select(Result).where(Result.eval_id == eval_id).order_by(Result.created_at)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return _eval_detail(obj, list(rows))
 
     @app.delete("/api/v1/evals/{eval_id}", status_code=204)
@@ -521,7 +522,9 @@ def create_app() -> FastAPI:
         try:
             provider = registry.get(request.providerId)
         except KeyError:
-            raise HTTPException(status_code=404, detail=f"Provider '{request.providerId}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Provider '{request.providerId}' not found"
+            )
 
         start = time.time()
         try:
@@ -566,12 +569,8 @@ def create_app() -> FastAPI:
         if not eval_a or not eval_b:
             raise HTTPException(status_code=404, detail="One or both evaluations not found")
 
-        rows_a = (
-            await session.execute(select(Result).where(Result.eval_id == a))
-        ).scalars().all()
-        rows_b = (
-            await session.execute(select(Result).where(Result.eval_id == b))
-        ).scalars().all()
+        rows_a = (await session.execute(select(Result).where(Result.eval_id == a))).scalars().all()
+        rows_b = (await session.execute(select(Result).where(Result.eval_id == b))).scalars().all()
 
         failed_a = {(r.plugin_id, r.prompt_raw) for r in rows_a if r.grading_passed is False}
         failed_b = {(r.plugin_id, r.prompt_raw) for r in rows_b if r.grading_passed is False}
@@ -620,8 +619,7 @@ def create_app() -> FastAPI:
         )
         rows = await session.execute(stmt)
         points = [
-            {"date": str(r[0]), "avgRiskScore": round(float(r[1]), 4), "count": r[2]}
-            for r in rows
+            {"date": str(r[0]), "avgRiskScore": round(float(r[1]), 4), "count": r[2]} for r in rows
         ]
         return {"days": days, "data": points}
 
@@ -717,8 +715,8 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/teams")
     async def list_teams(session: AsyncSession = Depends(get_session)):
         rows = (
-            await session.execute(select(Team).order_by(Team.created_at.desc()))
-        ).scalars().all()
+            (await session.execute(select(Team).order_by(Team.created_at.desc()))).scalars().all()
+        )
 
         teams = []
         for t in rows:
@@ -780,10 +778,14 @@ def create_app() -> FastAPI:
         session: AsyncSession = Depends(get_session),
     ):
         rows = (
-            await session.execute(
-                select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
+            (
+                await session.execute(
+                    select(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return {
             "logs": [
                 {

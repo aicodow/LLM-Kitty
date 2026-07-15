@@ -22,6 +22,7 @@ class BaseModel(_PydanticBaseModel):
 
 # ── Enums ────────────────────────────────────────────────────────────────
 
+
 class Severity(str, enum.Enum):
     """Severity levels for red-team findings and vulnerabilities."""
 
@@ -50,6 +51,7 @@ class TargetType(str, enum.Enum):
 
 
 # ── Provider Models ──────────────────────────────────────────────────────
+
 
 class ProviderConfig(BaseModel):
     """Configuration for a single LLM provider instance.
@@ -84,6 +86,7 @@ class ProviderResponse(BaseModel):
 
 
 # ── Prompt Models ────────────────────────────────────────────────────────
+
 
 class Prompt(BaseModel):
     """A prompt template or literal sent to a provider.
@@ -132,14 +135,13 @@ class CompletedPrompt(BaseModel):
     """
 
     prompt: Prompt
-    provider_response: Optional[ProviderResponse] = Field(
-        default=None, alias="providerResponse"
-    )
+    provider_response: Optional[ProviderResponse] = Field(default=None, alias="providerResponse")
     raw: Optional[str] = None
     error: Optional[str] = None
 
 
 # ── Grading Models ───────────────────────────────────────────────────────
+
 
 class GradingResult(BaseModel):
     """The result of grading a single test case output.
@@ -157,16 +159,10 @@ class GradingResult(BaseModel):
     passed: bool
     score: float = Field(ge=0.0, le=1.0)
     reason: str = ""
-    named_scores: dict[str, float] = Field(
-        default_factory=dict, alias="namedScores"
-    )
-    tokens_used: dict[str, Any] = Field(
-        default_factory=dict, alias="tokensUsed"
-    )
+    named_scores: dict[str, float] = Field(default_factory=dict, alias="namedScores")
+    tokens_used: dict[str, Any] = Field(default_factory=dict, alias="tokensUsed")
     assertion: Optional[dict[str, Any]] = None
-    component_results: Optional[list[Any]] = Field(
-        default=None, alias="componentResults"
-    )
+    component_results: Optional[list[Any]] = Field(default=None, alias="componentResults")
 
     @model_validator(mode="after")
     def _enforce_passed_from_score(self) -> GradingResult:
@@ -177,6 +173,7 @@ class GradingResult(BaseModel):
 
 
 # ── Statistics & Result Models ───────────────────────────────────────────
+
 
 class EvaluateStats(BaseModel):
     """Aggregated statistics for a completed evaluation run.

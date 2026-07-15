@@ -26,20 +26,22 @@ from typing import Any
 from kitty.types.eval import GradingResult, ProviderResponse
 
 # Common guardrail assertion type names as used in Promptfoo configs.
-GUARDRAIL_TYPES = frozenset({
-    "guardrail",
-    "guardrails",
-    "moderation",
-    "self-harm",
-    "self_harm",
-    "violence",
-    "sexual",
-    "hate",
-    "harassment",
-    "disallowed",
-    "harmful",
-    "harmful:disallowed",
-})
+GUARDRAIL_TYPES = frozenset(
+    {
+        "guardrail",
+        "guardrails",
+        "moderation",
+        "self-harm",
+        "self_harm",
+        "violence",
+        "sexual",
+        "hate",
+        "harassment",
+        "disallowed",
+        "harmful",
+        "harmful:disallowed",
+    }
+)
 
 
 async def run_guardrail_assertions(
@@ -354,9 +356,7 @@ def _get_moderation_config(
     """
     # Check assertion-level moderation config.
     assertion_config = assertion.get("config")
-    if isinstance(assertion_config, dict) and assertion_config.get(
-        "moderation_api"
-    ):
+    if isinstance(assertion_config, dict) and assertion_config.get("moderation_api"):
         return assertion_config
 
     # Check if the registry knows about a moderation provider.

@@ -13,6 +13,7 @@ class KittyError(Exception):
 
 # ── Configuration Errors ─────────────────────────────────────────────────
 
+
 class ConfigError(KittyError):
     """Raised when there is a general configuration problem."""
 
@@ -32,6 +33,7 @@ class ConfigNotFoundError(ConfigError):
 
 
 # ── Provider Errors ──────────────────────────────────────────────────────
+
 
 class ProviderError(KittyError):
     """Raised when an LLM provider encounters a general issue."""
@@ -59,6 +61,7 @@ class ProviderRateLimitError(ProviderError):
 
 # ── Evaluation Errors ────────────────────────────────────────────────────
 
+
 class EvalError(KittyError):
     """Raised when an evaluation run encounters a general failure."""
 
@@ -79,6 +82,7 @@ class EvalInterruptedError(EvalError):
 
 # ── Cache Errors ─────────────────────────────────────────────────────────
 
+
 class CacheError(KittyError):
     """Raised when a caching operation fails."""
 
@@ -86,6 +90,7 @@ class CacheError(KittyError):
 
 
 # ── Security Errors ──────────────────────────────────────────────────────
+
 
 class SecurityError(KittyError):
     """Raised when a security violation is detected."""

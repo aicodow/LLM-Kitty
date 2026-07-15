@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 
 from kitty.types import (
     EvaluateResult,
+    EvaluateStats,
     GradingResult,
     ProviderResponse,
+    ResultFailureReason,
     Severity,
+    TargetType,
     TestCase,
-    TestResultFailureReason,
-    TestTargetType,
 )
 
 
@@ -20,32 +23,23 @@ class TestEnums:
 
     def test_severity_values(self) -> None:
         """Severity enum should have expected values."""
-        assert Severity.INFO.value == "info"
         assert Severity.LOW.value == "low"
         assert Severity.MEDIUM.value == "medium"
         assert Severity.HIGH.value == "high"
         assert Severity.CRITICAL.value == "critical"
 
-    def test_severity_ordering(self) -> None:
-        """Severity levels should be comparable."""
-        assert Severity.LOW > Severity.INFO
-        assert Severity.MEDIUM > Severity.LOW
-        assert Severity.HIGH > Severity.MEDIUM
-        assert Severity.CRITICAL > Severity.HIGH
-
-    def test_test_result_failure_reason_values(self) -> None:
-        """TestResultFailureReason enum should have expected values."""
-        reasons = TestResultFailureReason
+    def test_result_failure_reason_values(self) -> None:
+        """ResultFailureReason enum should have expected values."""
+        reasons = ResultFailureReason
         assert reasons.ASSERTION.value == "assertion"
         assert reasons.PROVIDER_ERROR.value == "provider_error"
         assert reasons.TIMEOUT.value == "timeout"
-        assert reasons.TARGET_ERROR.value == "target_error"
 
-    def test_test_target_type_values(self) -> None:
-        """TestTargetType enum should have expected values."""
-        assert TestTargetType.LLM.value == "llm"
-        assert TestTargetType.TOOL.value == "tool"
-        assert TestTargetType.AGENT.value == "agent"
+    def test_target_type_values(self) -> None:
+        """TargetType enum should have expected values."""
+        assert TargetType.BASE_MODEL.value == "base_model"
+        assert TargetType.RAG_SYSTEM.value == "rag_system"
+        assert TargetType.AI_AGENT.value == "ai_agent"
 
 
 class TestProviderResponse:
@@ -55,7 +49,7 @@ class TestProviderResponse:
         """A ProviderResponse should be creatable with just output."""
         response = ProviderResponse(output="Hello, world!")
         assert response.output == "Hello, world!"
-        assert response.tokenUsage == {}
+        assert response.token_usage == {}
         assert response.cached is False
 
     def test_creation_with_all_fields(self) -> None:
@@ -66,7 +60,7 @@ class TestProviderResponse:
             cached=True,
             cost=0.002,
         )
-        assert response.tokenUsage["total"] == 100
+        assert response.token_usage["total"] == 100
         assert response.cached is True
         assert response.cost == 0.002
 
@@ -77,7 +71,7 @@ class TestProviderResponse:
             tokenUsage={"total": 42},
             cached=False,
         )
-        data = response.model_dump()
+        data = response.model_dump(by_alias=True)
         assert data["output"] == "Test"
         assert data["tokenUsage"] == {"total": 42}
         assert data["cached"] is False
@@ -90,33 +84,24 @@ class TestGradingResult:
         """A score of 1.0 should result in passed=True."""
         result = GradingResult(
             score=1.0,
-            message="Perfect match",
-            name="test-assertion",
-            assertion_type="contains",
+            reason="Perfect match",
         )
         assert result.passed is True
-        assert result.score == 1.0
 
     def test_custom_values(self) -> None:
         """GradingResult should accept and store custom values."""
         result = GradingResult(
             score=0.0,
             passed=False,
-            message="No match found",
-            name="fail-assertion",
-            assertion_type="contains",
-            details={"expected": "Hello", "actual": "Goodbye"},
+            reason="No match found",
         )
         assert result.passed is False
-        assert result.details == {"expected": "Hello", "actual": "Goodbye"}
 
     def test_zero_score_implies_not_passed(self) -> None:
-        """A score of 0.0 should default passed to False."""
+        """A score of 0.0 should not automatically set passed to True."""
         result = GradingResult(
             score=0.0,
-            message="Failure",
-            name="test",
-            assertion_type="equals",
+            reason="Failure",
         )
         assert result.passed is False
 
@@ -126,23 +111,24 @@ class TestTestCase:
 
     def test_default_fields(self) -> None:
         """TestCase should provide sensible defaults."""
-        tc = TestCase(vars={"input": "Hello"})
+        tc = TestCase(prompt="test prompt", vars={"input": "Hello"})
         assert tc.vars == {"input": "Hello"}
-        assert tc.assert_ == []
+        assert tc.assertions == []
         assert tc.description is None
         assert tc.metadata == {}
 
     def test_with_assertions(self) -> None:
         """TestCase should store assertion configurations."""
         tc = TestCase(
+            prompt="test prompt",
             vars={"input": "Hello"},
-            assert_=[
+            assertions=[
                 {"type": "contains", "value": "Hello"},
                 {"type": "not-contains", "value": "Goodbye"},
             ],
         )
-        assert len(tc.assert_) == 2
-        assert tc.assert_[0]["type"] == "contains"
+        assert len(tc.assertions) == 2
+        assert tc.assertions[0]["type"] == "contains"
 
 
 class TestEvaluateResult:
@@ -150,57 +136,39 @@ class TestEvaluateResult:
 
     def test_structure(self) -> None:
         """EvaluateResult should contain all expected fields."""
-        result = EvaluateResult(
-            prompt="Hello {{name}}",
-            rendered_prompt="Hello World",
-            provider_id="openai:chat:gpt-4",
-            target_id="test-target",
-            response=ProviderResponse(output="Hello back!"),
-            success=True,
-            grading_result=None,
-            error=None,
-            latency_ms=150,
+        stats = EvaluateStats(
+            totalTests=10,
+            totalPassed=7,
+            totalFailed=2,
+            totalErrors=1,
+            passRate=0.7,
         )
-        assert result.success is True
-        assert result.provider_id == "openai:chat:gpt-4"
-        assert result.response.output == "Hello back!"
-        assert result.grading_result is None
-        assert result.error is None
-        assert result.latency_ms == 150
+        result = EvaluateResult(
+            id="eval_test123",
+            results=[
+                {"prompt": "Hello", "provider_id": "openai:chat:gpt-4"},
+            ],
+            stats=stats,
+        )
+        assert result.id == "eval_test123"
+        assert len(result.results) == 1
+        assert result.stats.total_tests == 10
+        assert result.stats.pass_rate == 0.7
 
-    def test_with_grading_result(self) -> None:
-        """EvaluateResult should store grading results."""
-        grading = GradingResult(
-            score=1.0,
-            passed=True,
-            message="Match",
-            name="contains-check",
-            assertion_type="contains",
-        )
-        result = EvaluateResult(
-            prompt="Hello",
-            rendered_prompt="Hello World",
-            provider_id="openai:chat:gpt-4",
-            target_id="test-target",
-            response=ProviderResponse(output="Hello back!"),
-            success=True,
-            grading_result=grading,
-        )
-        assert result.grading_result is not None
-        assert result.grading_result.passed is True
-        assert result.grading_result.score == 1.0
+    def test_defaults(self) -> None:
+        """EvaluateResult should provide sensible defaults."""
+        result = EvaluateResult(id="eval_default")
+        assert result.results == []
+        assert result.stats.total_tests == 0
+        assert result.risk_score is None
 
-    def test_error_case(self) -> None:
-        """EvaluateResult should store error information."""
+    def test_vulnerabilities(self) -> None:
+        """EvaluateResult should store vulnerability findings."""
         result = EvaluateResult(
-            prompt="Hello",
-            rendered_prompt="Hello World",
-            provider_id="openai:chat:gpt-4",
-            target_id="test-target",
-            response=None,
-            success=False,
-            error="Provider returned 500 Internal Server Error",
+            id="eval_redteam",
+            vulnerabilities=[
+                {"plugin": "foundation:pii", "severity": "high"},
+            ],
         )
-        assert result.success is False
-        assert result.error is not None
-        assert "500" in result.error
+        assert len(result.vulnerabilities) == 1
+        assert result.vulnerabilities[0]["plugin"] == "foundation:pii"

@@ -1,4 +1,5 @@
 """Safe YAML configuration loader with environment variable resolution."""
+
 import os
 import re
 from pathlib import Path

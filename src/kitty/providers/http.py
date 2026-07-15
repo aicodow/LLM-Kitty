@@ -89,9 +89,7 @@ class HttpProvider(BaseProvider):
 
         method = self.config.get("method", "POST").upper()
         headers = dict(self.config.get("headers", {}))
-        body_template = self.config.get(
-            "body", '{"prompt": "{{prompt}}"}'
-        )
+        body_template = self.config.get("body", '{"prompt": "{{prompt}}"}')
 
         # Render template variables
         body = body_template.replace("{{prompt}}", prompt)
@@ -114,18 +112,14 @@ class HttpProvider(BaseProvider):
             )
             response.raise_for_status()
         except httpx.TimeoutException as exc:
-            raise ProviderError(
-                f"HTTP request timed out: {exc}", status_code=None
-            ) from exc
+            raise ProviderError(f"HTTP request timed out: {exc}", status_code=None) from exc
         except httpx.HTTPStatusError as exc:
             raise ProviderError(
                 f"HTTP error ({exc.response.status_code}): {exc.response.text}",
                 status_code=exc.response.status_code,
             ) from exc
         except httpx.RequestError as exc:
-            raise ProviderError(
-                f"HTTP request failed: {exc}", status_code=None
-            ) from exc
+            raise ProviderError(f"HTTP request failed: {exc}", status_code=None) from exc
 
         # Extract output
         data: dict[str, Any] | None = None
@@ -133,9 +127,7 @@ class HttpProvider(BaseProvider):
 
         if "application/json" in content_type:
             data = response.json()
-            output = self._extract_json_path(
-                data, self.config.get("output_path")
-            )
+            output = self._extract_json_path(data, self.config.get("output_path"))
             if output is None:
                 output = response.text
         else:

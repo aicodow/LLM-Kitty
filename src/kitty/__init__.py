@@ -34,6 +34,7 @@ __all__ = [
 
 # ── Public API ───────────────────────────────────────────────────────────
 
+
 def evaluate(config: KittyConfig) -> EvaluateResult:
     """Run a full evaluation from a configuration object.
 

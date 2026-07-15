@@ -27,7 +27,9 @@ _SERVER_INFO = {
 }
 
 
-def _make_request(method: str, params: Optional[Dict[str, Any]] = None, *, _id: Any = 1) -> Dict[str, Any]:
+def _make_request(
+    method: str, params: Optional[Dict[str, Any]] = None, *, _id: Any = 1
+) -> Dict[str, Any]:
     """Build a JSON-RPC 2.0 request object."""
     msg: Dict[str, Any] = {
         "jsonrpc": "2.0",
@@ -225,9 +227,7 @@ class MCPServer:
             try:
                 request = json.loads(line)
             except json.JSONDecodeError as exc:
-                _write_message(
-                    _make_error_response(None, -32700, "Parse error", str(exc))
-                )
+                _write_message(_make_error_response(None, -32700, "Parse error", str(exc)))
                 continue
 
             if not isinstance(request, dict) or request.get("jsonrpc") != "2.0":
@@ -309,7 +309,9 @@ class MCPServer:
 
             try:
                 result = await tool["handler"](tool_args)
-                return _make_success_response(_id, {"content": [{"type": "text", "text": json.dumps(result, default=str)}]})
+                return _make_success_response(
+                    _id, {"content": [{"type": "text", "text": json.dumps(result, default=str)}]}
+                )
             except Exception as exc:
                 logger.exception("Tool %s failed", tool_name)
                 return _make_error_response(

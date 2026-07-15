@@ -63,9 +63,7 @@ class PluginManifest(BaseModel):
     requires_purpose: bool = Field(
         default=True, description="Whether a target purpose string is required"
     )
-    requires_entities: bool = Field(
-        default=False, description="Whether entity lists are required"
-    )
+    requires_entities: bool = Field(default=False, description="Whether entity lists are required")
     supported_providers: list[str] = Field(
         default_factory=list,
         description="Provider IDs this plugin supports (empty = all)",

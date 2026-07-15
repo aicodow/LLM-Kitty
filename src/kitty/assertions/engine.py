@@ -49,6 +49,7 @@ _AssertionHandler = Callable[
     Coroutine[Any, Any, dict[str, Any]],
 ]
 
+
 async def run_assertions(
     prompt: str,
     response: ProviderResponse,
@@ -201,11 +202,7 @@ async def _handle_contains(
     if isinstance(value, list):
         passed = any(str(v) in output for v in value)
         found = [str(v) for v in value if str(v) in output]
-        reason = (
-            "Output contains expected text"
-            if passed
-            else f"None of {value} found in output"
-        )
+        reason = "Output contains expected text" if passed else f"None of {value} found in output"
     else:
         value_str = str(value)
         passed = value_str in output
@@ -244,11 +241,7 @@ async def _handle_not_contains(
     return {
         "passed": passed,
         "score": 1.0 if passed else 0.0,
-        "reason": (
-            "No banned strings found"
-            if passed
-            else f"Found banned strings: {found}"
-        ),
+        "reason": ("No banned strings found" if passed else f"Found banned strings: {found}"),
     }
 
 
@@ -276,11 +269,7 @@ async def _handle_regex(
     return {
         "passed": bool(matched),
         "score": 1.0 if matched else 0.0,
-        "reason": (
-            f"Regex '{pattern}' matched"
-            if matched
-            else f"Regex '{pattern}' did not match"
-        ),
+        "reason": (f"Regex '{pattern}' matched" if matched else f"Regex '{pattern}' did not match"),
     }
 
 
@@ -417,9 +406,7 @@ async def _handle_latency(
     if latency_ms is None:
         # Check token usage for timing hints.
         token_usage = response.token_usage or {}
-        latency_ms = token_usage.get("latency_ms") or token_usage.get(
-            "latencyMs"
-        )
+        latency_ms = token_usage.get("latency_ms") or token_usage.get("latencyMs")
 
     if latency_ms is None:
         return {

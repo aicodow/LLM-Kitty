@@ -115,9 +115,7 @@ class CacheManager:
     # Public API
     # ------------------------------------------------------------------
 
-    async def get(
-        self, provider_id: str, prompt: str
-    ) -> Optional[Dict[str, Any]]:
+    async def get(self, provider_id: str, prompt: str) -> Optional[Dict[str, Any]]:
         """Retrieve a cached response.
 
         Args:
@@ -158,9 +156,7 @@ class CacheManager:
 
         return None
 
-    async def set(
-        self, provider_id: str, prompt: str, response: Dict[str, Any]
-    ) -> None:
+    async def set(self, provider_id: str, prompt: str, response: Dict[str, Any]) -> None:
         """Store a response in the cache.
 
         Args:
@@ -225,9 +221,7 @@ class CacheManager:
                 pattern = f"{provider_id}:*" if provider_id else "*"
                 cursor = 0
                 while True:
-                    cursor, keys = await self._redis.scan(
-                        cursor=cursor, match=pattern, count=500
-                    )
+                    cursor, keys = await self._redis.scan(cursor=cursor, match=pattern, count=500)
                     if keys:
                         await self._redis.delete(*keys)
                         count += len(keys)

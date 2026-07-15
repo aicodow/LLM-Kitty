@@ -8,15 +8,18 @@ from typing import AsyncGenerator
 import pytest
 import pytest_asyncio
 
-from kitty.config.models import KittyConfig, RedTeamConfig
-from kitty.core.provider import BaseProvider, ProviderResponse
+from kitty.providers.base import BaseProvider, ProviderResponse
 from kitty.providers.registry import ProviderRegistry
+from kitty.types.config import KittyConfig, RedteamConfig as RedTeamConfig
 
 
 class _MockOpenAIProvider(BaseProvider):
     """Mock OpenAI provider for testing."""
 
     provider_id: str = "openai:chat:gpt-4.1"
+
+    def __init__(self) -> None:
+        pass
 
     async def call_api(self, prompt: str, **kwargs) -> ProviderResponse:
         return ProviderResponse(
@@ -33,6 +36,9 @@ class _MockAnthropicProvider(BaseProvider):
     """Mock Anthropic provider for testing."""
 
     provider_id: str = "anthropic:chat:claude-3-opus-20240229"
+
+    def __init__(self) -> None:
+        pass
 
     async def call_api(self, prompt: str, **kwargs) -> ProviderResponse:
         return ProviderResponse(
@@ -136,7 +142,7 @@ async def tmp_db(
     """Autouse fixture that sets up a temporary SQLite database for tests."""
     db_path = str(tmp_path / "test.db")
     monkeypatch.setenv("KITTY_DATABASE_URL", f"sqlite+aiosqlite:///{db_path}")
-    from kitty.db import init_db
+    from kitty.database import init_db
 
     await init_db()
     yield

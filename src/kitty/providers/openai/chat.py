@@ -45,16 +45,8 @@ class OpenAiChatProvider(BaseProvider):
         """
         super().__init__(provider_id, config)
 
-        api_key = (
-            self.config.get("api_key")
-            or self.config.get("apiKey")
-            or ""
-        )
-        base_url = (
-            self.config.get("base_url")
-            or self.config.get("apiBaseUrl")
-            or DEFAULT_BASE_URL
-        )
+        api_key = self.config.get("api_key") or self.config.get("apiKey") or ""
+        base_url = self.config.get("base_url") or self.config.get("apiBaseUrl") or DEFAULT_BASE_URL
 
         self._client = httpx.AsyncClient(
             base_url=base_url.rstrip("/"),
@@ -121,13 +113,9 @@ class OpenAiChatProvider(BaseProvider):
         try:
             response = await self._client.post("/chat/completions", json=payload)
         except httpx.TimeoutException as exc:
-            raise ProviderError(
-                f"OpenAI request timed out: {exc}", status_code=None
-            ) from exc
+            raise ProviderError(f"OpenAI request timed out: {exc}", status_code=None) from exc
         except httpx.RequestError as exc:
-            raise ProviderError(
-                f"OpenAI request failed: {exc}", status_code=None
-            ) from exc
+            raise ProviderError(f"OpenAI request failed: {exc}", status_code=None) from exc
 
         return self._handle_response(response)
 
@@ -182,7 +170,10 @@ class OpenAiChatProvider(BaseProvider):
             output=output,
             token_usage=token_usage,
             cached=False,
-            metadata={"model": data.get("model"), "finish_reason": data.get("choices", [{}])[0].get("finish_reason")},
+            metadata={
+                "model": data.get("model"),
+                "finish_reason": data.get("choices", [{}])[0].get("finish_reason"),
+            },
         )
 
     async def on_shutdown(self) -> None:
