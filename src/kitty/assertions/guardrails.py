@@ -21,6 +21,7 @@ guardrail result fails, regardless of how many others passed.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from kitty.types.eval import GradingResult, ProviderResponse
@@ -360,11 +361,9 @@ def _get_moderation_config(
 
     # Check if the registry knows about a moderation provider.
     if registry is not None:
-        try:
+        with contextlib.suppress(Exception):
             registered = registry.list_registered()
             if any("moderation" in p.lower() for p in registered):
                 return {"provider": "builtin"}
-        except Exception:
-            pass
 
     return None

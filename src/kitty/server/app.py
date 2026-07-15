@@ -819,7 +819,7 @@ def create_app() -> FastAPI:
             "defaultProvider": os.getenv("KITTY_DEFAULT_PROVIDER", ""),
             "logLevel": os.getenv("LOG_LEVEL", "INFO"),
             "server": {
-                "host": os.getenv("KITTY_HOST", "0.0.0.0"),
+                "host": os.getenv("KITTY_HOST", "0.0.0.0"),  # nosec B104
                 "port": int(os.getenv("KITTY_PORT", "15500")),
             },
         }

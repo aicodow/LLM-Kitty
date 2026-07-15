@@ -400,7 +400,7 @@ def providers_list() -> None:
 
 @app.command("server")
 def server_start(
-    host: str = typer.Option("0.0.0.0", "--host", help="Bind address"),
+    host: str = typer.Option("0.0.0.0", "--host", help="Bind address"),  # nosec B104
     port: int = typer.Option(15500, "--port", "-p", help="Listen port"),
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload on code changes"),
 ) -> None:

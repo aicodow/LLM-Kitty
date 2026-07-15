@@ -612,7 +612,7 @@ class EvaluationPipeline:
         if "{{" not in template and "{%" not in template:
             return template
 
-        env = Environment(loader=BaseLoader())
+        env = Environment(loader=BaseLoader(), autoescape=True)
         rendered = env.from_string(template).render(**vars_)
         return rendered
 
@@ -633,7 +633,7 @@ class EvaluationPipeline:
         if opts.filter_sample is not None and opts.filter_sample > 0:
             import random
 
-            rng = random.Random(opts.filter_sample_seed)
+            rng = random.Random(opts.filter_sample_seed)  # nosec B311
             sample_size = min(opts.filter_sample, len(test_cases))
             test_cases = rng.sample(test_cases, sample_size)
             logger.debug(

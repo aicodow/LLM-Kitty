@@ -150,7 +150,7 @@ def load_yaml_config(path: str) -> dict[str, Any]:
     """
     resolved_path = safe_resolve_path(path)
     with open(resolved_path, encoding="utf-8") as f:
-        data: dict[str, Any] | None = yaml.load(f, Loader=SafeYamlLoader)
+        data: dict[str, Any] | None = yaml.load(f, Loader=SafeYamlLoader)  # nosec B506
     return resolve_env_vars(data or {})
 
 

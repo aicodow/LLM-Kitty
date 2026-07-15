@@ -215,7 +215,7 @@ async def retry_with_backoff(
             delay = min(base_delay * (2 ** (attempt - 1)), max_delay)
             if jitter:
                 jitter_amount = delay * 0.25
-                delay = delay + random.uniform(-jitter_amount, jitter_amount)
+                delay = delay + random.uniform(-jitter_amount, jitter_amount)  # nosec B311
                 delay = max(0.0, delay)
 
             logger.info(
