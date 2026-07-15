@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Kitty Documentation
+    url: https://kitty.dev/docs
+    about: Check the documentation before opening an issue
+  - name: Discussion Forum
+    url: https://github.com/your-org/kitty/discussions
+    about: Ask questions and discuss ideas
+  - name: Security Issues
+    url: https://github.com/your-org/kitty/security/policy
+    about: Report security vulnerabilities here

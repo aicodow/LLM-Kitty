@@ -1,0 +1,19 @@
+apiVersion: v2
+name: kitty
+description: A Helm chart for deploying Kitty, the LLM red-teaming evaluation framework, on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/example/kitty
+sources:
+  - https://github.com/example/kitty
+keywords:
+  - llm
+  - red-teaming
+  - evaluation
+  - prompt-injection
+  - security
+maintainers:
+  - name: Kitty Team
+    email: kitty-team@example.com
+icon: https://raw.githubusercontent.com/example/kitty/main/docs/logo.png

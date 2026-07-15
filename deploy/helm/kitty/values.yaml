@@ -1,0 +1,188 @@
+"""Default values for the Kitty Helm chart."""
+
+# -- Number of API server replicas
+replicaCount: 2
+
+image:
+  repository: ghcr.io/example/kitty
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use; if not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+# -- Pod-level security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container-level security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: kitty.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+  tls:
+    - secretName: kitty-tls
+      hosts:
+        - kitty.example.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# -- Horizontal Pod Autoscaler configuration
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
+
+# -- Node selection constraints
+nodeSelector: {}
+
+# -- Pod tolerations for scheduling
+tolerations: []
+
+# -- Pod affinity rules
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - kitty
+          topologyKey: kubernetes.io/hostname
+
+# -- Database connection configuration
+mysql:
+  host: mysql
+  port: 3306
+  database: kitty
+  user: kitty
+  passwordSecret:
+    name: kitty-secrets
+    key: mysql-password
+
+# -- Redis connection configuration
+redis:
+  host: redis
+  port: 6379
+  db: 0
+
+# -- Application secret configuration
+app:
+  secretName: kitty-secrets
+  databaseUrlKey: database-url
+  redisUrlKey: redis-url
+  secretKey: kitty-secret
+
+# -- API key configuration for LLM providers
+apiKeys:
+  openai:
+    secretName: kitty-api-keys
+    secretKey: openai-api-key
+  anthropic:
+    secretName: kitty-api-keys
+    secretKey: anthropic-api-key
+
+# -- Worker configuration
+worker:
+  enabled: true
+  replicas: 2
+  concurrency: 4
+  resources:
+    limits:
+      cpu: 2
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+# -- Observability settings
+observability:
+  tracing:
+    enabled: false
+    exporter: otlp
+    endpoint: "http://otel-collector:4318/v1/traces"
+    samplingRatio: 0.1
+  metrics:
+    enabled: false
+    port: 9090
+    serviceMonitor:
+      enabled: false
+      interval: 15s
+      scrapeTimeout: 10s
+  logging:
+    level: info
+    format: json
+
+# -- Persistent volume configuration
+persistence:
+  data:
+    size: 10Gi
+    storageClass: standard
+    accessMode: ReadWriteOnce
+  cache:
+    size: 5Gi
+    storageClass: standard
+    accessMode: ReadWriteOnce
+
+# -- Liveness and readiness probe configuration
+probes:
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 2
