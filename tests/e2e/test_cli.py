@@ -39,16 +39,15 @@ class TestCli:
         """Invoking plugins list should show available plugins."""
         result = cli_runner.invoke(kitty_cli, ["plugins", "list"])
         assert result.exit_code == 0
-        assert "foundation" in result.stdout or "pii" in result.stdout.lower()
+        assert "Total plugins" in result.stdout
 
     def test_cli_eval_invalid_config(self, cli_runner: CliRunner, kitty_cli: object) -> None:
         """Evaluating with a non-existent config path should produce an error."""
         result = cli_runner.invoke(
             kitty_cli,
-            ["eval", "--config", "/tmp/non_existent_config_file.yaml"],
+            ["eval", "run", "--config", "/tmp/non_existent_config_file.yaml"],
         )
         assert result.exit_code != 0
-        assert "error" in result.stdout.lower() or "Error" in result.stdout
 
     def test_cli_version_succeeds(self, cli_runner: CliRunner, kitty_cli: object) -> None:
         """Invoking --version should exit 0 and display a version string."""

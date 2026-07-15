@@ -6,8 +6,8 @@ for discovering and loading red team test plugins.
 
 from __future__ import annotations
 
-from kitty.redteam.plugins.base import RedteamPluginBase
-from kitty.redteam.plugins.manifest import PluginContext, PluginManifest
+from kitty.redteam.plugins.base import PluginContext, RedteamPluginBase
+from kitty.redteam.plugins.manifest import PluginManifest
 from kitty.redteam.plugins.registry import PluginRegistry
 
 __all__ = [

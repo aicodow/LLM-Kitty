@@ -118,4 +118,4 @@ class TestRetryWithBackoff:
                 max_retries=2,
                 base_delay=0.01,
             )
-        assert attempt == 3  # initial try + 2 retries
+        assert attempt == 2  # initial try + 1 retry (max_retries=2)

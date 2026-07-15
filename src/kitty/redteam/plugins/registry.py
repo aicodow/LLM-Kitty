@@ -233,7 +233,7 @@ class PluginRegistry:
                 requires_purpose=item.get("requires_purpose", default_requires_purpose),
                 requires_entities=item.get("requires_entities", False),
                 supported_providers=item.get("supported_providers", []),
-                plugin_class=item.get("plugin_class", None),
+                plugin_class=item.get("plugin_class"),
             )
 
             cls._register_manifest(manifest)

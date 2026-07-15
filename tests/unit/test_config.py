@@ -87,7 +87,7 @@ class TestKittyConfigValidation:
         config_dict = {
             "targets": [{"id": "test-target", "provider": {"id": "openai:chat:gpt-4"}}],
         }
-        with pytest.raises(ValidationError, match="prompts|tests|redteam"):
+        with pytest.raises(ValidationError, match=r"prompts|tests|redteam"):
             KittyConfig.model_validate(config_dict)
 
     def test_provider_config_accepted(self) -> None:
@@ -112,11 +112,11 @@ class TestEvaluateOptions:
     def test_default_values(self) -> None:
         """EvaluateOptions should have sensible defaults."""
         opts = EvaluateOptions()
-        assert opts.maxConcurrency == 4
+        assert opts.max_concurrency == 4
         assert opts.cache is True
 
     def test_custom_values(self) -> None:
         """Custom values should be properly stored."""
         opts = EvaluateOptions(maxConcurrency=10, cache=False)
-        assert opts.maxConcurrency == 10
+        assert opts.max_concurrency == 10
         assert opts.cache is False

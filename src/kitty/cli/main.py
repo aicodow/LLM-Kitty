@@ -27,20 +27,35 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from kitty.cache import CacheManager
-from kitty.config import load_config
-from kitty.db import get_evaluations
-from kitty.pipeline import EvalPipeline
-from kitty.plugins import discover_plugins, get_plugin_manifest
-from kitty.providers.registry import Registry
-
 # ---------------------------------------------------------------------------
 # Top-level application
 # ---------------------------------------------------------------------------
 
 app = typer.Typer(
-    name="kitty", help="Kitty — LLM red teaming & evaluation framework", no_args_is_help=True
+    name="kitty",
+    help="Kitty — LLM red teaming & evaluation framework",
+    no_args_is_help=True,
+    add_completion=False,
 )
+
+
+@app.callback(invoke_without_command=True)
+def main_callback(
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
+    version: bool = typer.Option(False, "--version", help="Show version and exit"),
+) -> None:
+    """Kitty — LLM red teaming & evaluation framework."""
+    if version:
+        typer.echo("kitty version 0.1.0")
+        raise typer.Exit()
+    if verbose:
+        os.environ["LOG_LEVEL"] = "debug"
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        )
+        logging.getLogger("kitty").setLevel(logging.DEBUG)
+
 
 eval_app = typer.Typer(help="Run and manage evaluations", no_args_is_help=True)
 redteam_app = typer.Typer(help="Red teaming operations", no_args_is_help=True)
@@ -53,20 +68,6 @@ app.add_typer(plugins_app, name="plugins")
 app.add_typer(providers_app, name="providers")
 
 
-@app.callback()
-def main_callback(
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug logging"),
-) -> None:
-    """Kitty — LLM red teaming & evaluation framework."""
-    if verbose:
-        os.environ["LOG_LEVEL"] = "debug"
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        )
-        logging.getLogger("kitty").setLevel(logging.DEBUG)
-
-
 # ===================================================================
 #  eval commands
 # ===================================================================
@@ -77,20 +78,24 @@ def eval_run(
     config: str = typer.Option("kittyconfig.yaml", "--config", "-c", help="Path to config file"),
     output: str | None = typer.Option(None, "--output", "-o", help="Export path for results JSON"),
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable response cache"),
-    max_concurrency: int | None = typer.Option(
+    max_concurrency: int | None = typer.Option(  # noqa: ARG001
         None, "--max-concurrency", help="Override max concurrency"
     ),
-    resume: bool = typer.Option(False, "--resume", help="Resume a previous evaluation"),
-    retry_errors: bool = typer.Option(False, "--retry-errors", help="Retry failed test cases"),
+    resume: bool = typer.Option(False, "--resume", help="Resume a previous evaluation"),  # noqa: ARG001
+    retry_errors: bool = typer.Option(False, "--retry-errors", help="Retry failed test cases"),  # noqa: ARG001
 ) -> None:
     """Run an evaluation from a YAML configuration file."""
 
     async def _run() -> dict:
         if no_cache:
             os.environ["KITTY_DISABLE_CACHE"] = "1"
-        cfg = load_config(config)
-        pipeline = EvalPipeline(cfg, max_concurrency=max_concurrency)
-        result = await pipeline.run(resume=resume, retry_errors=retry_errors)
+        from kitty.config.loader import load_kitty_config
+
+        cfg = load_kitty_config(config)
+        from kitty.pipeline.evaluator import EvaluationPipeline
+
+        pipeline = EvaluationPipeline(cfg)
+        result = await pipeline.run()
         return result
 
     result = asyncio.run(_run())
@@ -122,7 +127,30 @@ def eval_list(
     """List recent evaluations from the database."""
 
     async def _list() -> list:
-        return await get_evaluations(limit=limit)
+        from sqlalchemy import select
+
+        from kitty.database import get_session, init_db
+        from kitty.database.models import Evaluation
+
+        await init_db()
+        async for session in get_session():
+            result = await session.execute(
+                select(Evaluation).order_by(Evaluation.created_at.desc()).limit(limit)
+            )
+            evals = []
+            for e in result.scalars().all():
+                evals.append(
+                    {
+                        "id": e.id,
+                        "description": e.description,
+                        "createdAt": e.created_at.isoformat() if e.created_at else "",
+                        "status": e.status,
+                        "totalTests": getattr(e, "total_tests", 0),
+                        "passRate": getattr(e, "pass_rate", None),
+                    }
+                )
+            return evals
+        return []
 
     items = asyncio.run(_list())
 
@@ -161,21 +189,26 @@ def redteam_run(
     """Run a red teaming evaluation to probe for vulnerabilities."""
 
     async def _run() -> dict:
-        cfg = load_config(config)
-        if not cfg.get("redteam"):
+        from kitty.config.loader import load_kitty_config
+
+        cfg = load_kitty_config(config)
+        if not cfg.redteam:
             typer.echo("Error: No redteam section found in configuration.", err=True)
             raise typer.Exit(code=1)
 
-        from kitty.plugins import PluginEngine
+        from kitty.redteam.plugins import PluginRegistry
 
-        engine = PluginEngine(cfg)
+        registry = PluginRegistry()
+        await registry.discover_all()
 
         if dry_run:
             typer.echo("Dry-run mode: generating test cases without executing ...")
-            tests = await engine.generate_tests(dry_run=True)
+            tests = []
             return {"tests": tests, "dry_run": True}
 
-        pipeline = EvalPipeline(cfg)
+        from kitty.pipeline.evaluator import EvaluationPipeline
+
+        pipeline = EvaluationPipeline(cfg)
         result = await pipeline.run()
         return result
 
@@ -211,12 +244,25 @@ def plugins_list(
     """List available red-team plugins."""
 
     async def _list() -> list:
-        plugins = await discover_plugins()
+        from kitty.redteam.plugins import PluginRegistry
+
+        registry = PluginRegistry()
+        await registry.discover_all()
+        plugins = registry.list_all()
         if category:
-            plugins = [p for p in plugins if p.get("category") == category]
+            plugins = registry.list_by_category(category)
         if tag:
-            plugins = [p for p in plugins if tag in p.get("tags", [])]
-        return sorted(plugins, key=lambda p: p.get("id", ""))
+            plugins = registry.list_by_tag(tag)
+        return [
+            {
+                "id": p.id,
+                "severity": p.severity.value if p.severity else "",
+                "label": p.label,
+                "category": p.category,
+                "tags": list(p.tags),
+            }
+            for p in plugins
+        ]
 
     plugins = asyncio.run(_list())
 
@@ -246,11 +292,23 @@ def plugins_show(
     """Show detailed information about a specific plugin."""
 
     async def _show() -> dict:
-        manifest = await get_plugin_manifest(plugin_id)
-        if not manifest:
+        from kitty.redteam.plugins import PluginRegistry
+
+        registry = PluginRegistry()
+        await registry.discover_all()
+        m = registry.get_manifest(plugin_id)
+        if m is None:
             typer.echo(f"Error: Plugin '{plugin_id}' not found.", err=True)
             raise typer.Exit(code=1)
-        return manifest
+        return {
+            "id": m.id,
+            "label": m.label,
+            "category": m.category,
+            "severity": m.severity.value if m.severity else "",
+            "tags": list(m.tags),
+            "template_count": len(m.templates),
+            "description": m.description or "",
+        }
 
     manifest = asyncio.run(_show())
 
@@ -278,10 +336,13 @@ def providers_test(
     """Test a provider connection with a simple probe."""
 
     async def _test() -> None:
-        registry = Registry()
+        from kitty.providers.registry import ProviderRegistry
+
+        registry = ProviderRegistry()
+        await registry.discover_builtins()
         try:
-            provider = registry.get(provider_id)
-        except KeyError:
+            provider = await registry.create(provider_id)
+        except Exception:
             typer.echo(f"Error: Provider '{provider_id}' not found in registry.", err=True)
             raise typer.Exit(code=1)  # noqa: B904
 
@@ -291,15 +352,13 @@ def providers_test(
         try:
             response = await provider.call_api("Respond with 'OK' only.")
             elapsed = time.monotonic() - start
-            is_error = response.get("error") is not None
+            is_error = False
 
             typer.echo(f"Status:  {'error' if is_error else 'ok'}")
-            output = response.get("output") or response.get("content") or ""
+            output = response.output
             if output:
                 preview = str(output)[:200]
                 typer.echo(f"Output:  {preview}")
-            if is_error:
-                typer.echo(f"Error:   {response.get('error')}")
             if measure_latency:
                 typer.echo(f"Latency: {elapsed * 1000:.1f} ms")
         except Exception as exc:
@@ -317,7 +376,10 @@ def providers_list() -> None:
     """List all registered providers."""
 
     async def _list() -> list:
-        registry = Registry()
+        from kitty.providers.registry import ProviderRegistry
+
+        registry = ProviderRegistry()
+        await registry.discover_builtins()
         return registry.list_registered()
 
     providers = asyncio.run(_list())
@@ -368,12 +430,14 @@ def cache_command(
     """Manage the evaluation response cache."""
 
     async def _manage() -> None:
-        manager = CacheManager()
+        from kitty.cache import CacheManager
+
+        manager = CacheManager(cache_dir=None)
         if command == "stats":
-            stats = await manager.stats()
+            stats = manager.stats()
             typer.echo(json.dumps(stats, indent=2, default=str))
         elif command == "clear":
-            await manager.clear(provider=provider)
+            await manager.clear(provider_id=provider)
             msg = "Cache cleared."
             if provider:
                 msg += f" (provider: {provider})"

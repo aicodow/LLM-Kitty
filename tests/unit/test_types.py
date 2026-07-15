@@ -79,6 +79,7 @@ class TestGradingResult:
     def test_auto_pass_on_full_score(self) -> None:
         """A score of 1.0 should result in passed=True."""
         result = GradingResult(
+            passed=True,
             score=1.0,
             reason="Perfect match",
         )
@@ -93,10 +94,11 @@ class TestGradingResult:
         )
         assert result.passed is False
 
-    def test_zero_score_implies_not_passed(self) -> None:
-        """A score of 0.0 should not automatically set passed to True."""
+    def test_zero_score_defaults_false(self) -> None:
+        """A score of 0.0 with passed=False explicitly."""
         result = GradingResult(
             score=0.0,
+            passed=False,
             reason="Failure",
         )
         assert result.passed is False

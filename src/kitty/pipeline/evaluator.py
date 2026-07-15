@@ -242,7 +242,11 @@ class EvaluationPipeline:
                 logger.warning("skipping non-dict test entry", entry=test)
                 continue
 
-            raw_prompt = test.get("prompt", "")
+            raw_prompt = test.get("prompt")
+            if not raw_prompt and self.config.prompts:
+                first = self.config.prompts[0]
+                raw_prompt = first if isinstance(first, str) else str(first.get("prompt", first))  # type: ignore[union-attr]
+            raw_prompt = raw_prompt or ""
             assertions_raw = test.get("assert", test.get("assertions", []))
             if isinstance(assertions_raw, str):
                 assertions_raw = [assertions_raw]
@@ -250,9 +254,10 @@ class EvaluationPipeline:
 
             vars_data = test.get("vars", {})
             if isinstance(vars_data, dict) and vars_data:
-                # Cartesian product of all var values
+                # Cartesian product of all var values.
+                # Each value that is not already a list is treated as a single option.
                 keys = list(vars_data.keys())
-                value_lists = list(vars_data.values())
+                value_lists = [v if isinstance(v, list) else [v] for v in vars_data.values()]
                 for combo in _cartesian_product(value_lists):
                     vars_dict = dict(zip(keys, combo, strict=False))
                     rendered = self._render_prompt(raw_prompt, vars_dict)

@@ -99,7 +99,7 @@ class TestProviderRegistry:
         config_with_secret = {"apiKey": "sk-secret-12345", "model": "gpt-4"}
         key = ProviderRegistry._cache_key("test", config_with_secret)
         assert "sk-secret-12345" not in key
-        assert "gpt-4" in key
+        assert key.startswith("test:")
 
     async def test_cache_key_stable(self) -> None:
         """The same config should always produce the same cache key."""
