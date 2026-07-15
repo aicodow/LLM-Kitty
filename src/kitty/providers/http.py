@@ -66,7 +66,7 @@ class HttpProvider(BaseProvider):
         self,
         prompt: str,
         context: dict[str, Any] | None = None,
-        options: dict[str, Any] | None = None,
+        _options: dict[str, Any] | None = None,
     ) -> ProviderResponse:
         """Send a templated HTTP request with the given prompt.
 

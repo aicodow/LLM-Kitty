@@ -14,7 +14,6 @@ import os
 import time
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional
 
 import yaml
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -131,79 +130,79 @@ class AuditLog(Base):
 
 
 class PromptData(BaseModel):
-    raw: Optional[str] = None
+    raw: str | None = None
 
 
 class ResponseData(BaseModel):
-    output: Optional[str] = None
+    output: str | None = None
 
 
 class GradingResult(BaseModel):
-    passed: Optional[bool] = None
-    score: Optional[float] = None
-    reason: Optional[str] = None
+    passed: bool | None = None
+    score: float | None = None
+    reason: str | None = None
 
 
 class EvalStats(BaseModel):
-    totalTests: int = 0
-    totalPassed: int = 0
-    totalFailed: int = 0
-    totalErrors: int = 0
-    passRate: Optional[float] = None
+    totalTests: int = 0  # noqa: N815
+    totalPassed: int = 0  # noqa: N815
+    totalFailed: int = 0  # noqa: N815
+    totalErrors: int = 0  # noqa: N815
+    passRate: float | None = None  # noqa: N815
 
 
 class EvalSummary(BaseModel):
     id: str
-    description: Optional[str] = None
-    createdAt: datetime
+    description: str | None = None
+    createdAt: datetime  # noqa: N815
     status: str = "pending"
-    totalTests: int = 0
-    passRate: Optional[float] = None
-    riskScore: Optional[float] = None
+    totalTests: int = 0  # noqa: N815
+    passRate: float | None = None  # noqa: N815
+    riskScore: float | None = None  # noqa: N815
 
 
 class ResultItem(BaseModel):
     id: str
     prompt: PromptData = PromptData()
-    providerId: Optional[str] = None
+    providerId: str | None = None  # noqa: N815
     response: ResponseData = ResponseData()
-    gradingResult: GradingResult = GradingResult()
-    pluginId: Optional[str] = None
-    severity: Optional[str] = None
+    gradingResult: GradingResult = GradingResult()  # noqa: N815
+    pluginId: str | None = None  # noqa: N815
+    severity: str | None = None
 
 
 class EvalDetail(BaseModel):
     id: str
-    description: Optional[str] = None
-    createdAt: datetime
-    completedAt: Optional[datetime] = None
+    description: str | None = None
+    createdAt: datetime  # noqa: N815
+    completedAt: datetime | None = None  # noqa: N815
     status: str
     stats: EvalStats = EvalStats()
-    results: List[ResultItem] = []
+    results: list[ResultItem] = []
 
 
 class EvalJobRequest(BaseModel):
     config: str
-    noCache: bool = False
+    noCache: bool  # noqa: N815 = False
 
 
 class ProviderTestRequest(BaseModel):
-    providerId: str
+    providerId: str  # noqa: N815
 
 
 class ProviderTestResponse(BaseModel):
     status: str
     latency: float = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class CreateTeamRequest(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class AddMemberRequest(BaseModel):
-    memberId: str
+    memberId: str  # noqa: N815
     role: str = "member"
 
 
@@ -255,7 +254,7 @@ def _result_item(r: Result) -> ResultItem:
     )
 
 
-def _eval_detail(e: Evaluation, results: List[Result]) -> EvalDetail:
+def _eval_detail(e: Evaluation, results: list[Result]) -> EvalDetail:
     return EvalDetail(
         id=e.id,
         description=e.description,
@@ -278,7 +277,7 @@ async def _add_audit_log(
     action: str,
     resource_type: str,
     resource_id: str,
-    details: Optional[str] = None,
+    details: str | None = None,
 ) -> None:
     session.add(
         AuditLog(
@@ -416,12 +415,12 @@ def create_app() -> FastAPI:
         return HealthResponse(status="healthy", version="0.1.0")
 
     @app.get("/api/v1/health/ready")
-    async def health_ready(session: AsyncSession = Depends(get_session)):
+    async def health_ready(session: AsyncSession = Depends(get_session)):  # noqa: B008
         try:
             await session.execute(text("SELECT 1"))
             return {"status": "ready"}
-        except Exception:
-            raise HTTPException(status_code=503, detail="Database unavailable")
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Database unavailable") from exc
 
     @app.get("/api/v1/health/live")
     async def health_live():
@@ -431,18 +430,18 @@ def create_app() -> FastAPI:
     # Evaluations
     # ======================================================================
 
-    @app.get("/api/v1/evals", response_model=List[EvalSummary])
+    @app.get("/api/v1/evals", response_model=list[EvalSummary])
     async def list_evals(
         limit: int = Query(50, ge=1, le=500),
         offset: int = Query(0, ge=0),
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         stmt = select(Evaluation).order_by(Evaluation.created_at.desc()).limit(limit).offset(offset)
         rows = (await session.execute(stmt)).scalars().all()
         return [_eval_summary(e) for e in rows]
 
     @app.get("/api/v1/evals/{eval_id}", response_model=EvalDetail)
-    async def get_eval(eval_id: str, session: AsyncSession = Depends(get_session)):
+    async def get_eval(eval_id: str, session: AsyncSession = Depends(get_session)):  # noqa: B008
         obj = await session.get(Evaluation, eval_id)
         if not obj:
             raise HTTPException(status_code=404, detail=f"Evaluation {eval_id} not found")
@@ -459,7 +458,7 @@ def create_app() -> FastAPI:
         return _eval_detail(obj, list(rows))
 
     @app.delete("/api/v1/evals/{eval_id}", status_code=204)
-    async def delete_eval(eval_id: str, session: AsyncSession = Depends(get_session)):
+    async def delete_eval(eval_id: str, session: AsyncSession = Depends(get_session)):  # noqa: B008
         obj = await session.get(Evaluation, eval_id)
         if not obj:
             raise HTTPException(status_code=404, detail=f"Evaluation {eval_id} not found")
@@ -471,13 +470,13 @@ def create_app() -> FastAPI:
         return None
 
     @app.get("/api/v1/results/{eval_id}", response_model=EvalDetail)
-    async def get_results(eval_id: str, session: AsyncSession = Depends(get_session)):
+    async def get_results(eval_id: str, session: AsyncSession = Depends(get_session)):  # noqa: B008
         return await get_eval(eval_id, session)
 
     @app.post("/api/v1/eval/job", status_code=201)
     async def create_eval_job(
         request: EvalJobRequest,
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         eval_id = _gen_id()
         obj = Evaluation(
@@ -524,7 +523,7 @@ def create_app() -> FastAPI:
         except KeyError:
             raise HTTPException(
                 status_code=404, detail=f"Provider '{request.providerId}' not found"
-            )
+            ) from None
 
         start = time.time()
         try:
@@ -544,10 +543,10 @@ def create_app() -> FastAPI:
     # History & comparison
     # ======================================================================
 
-    @app.get("/api/v1/history", response_model=List[EvalSummary])
+    @app.get("/api/v1/history", response_model=list[EvalSummary])
     async def list_history(
         limit: int = Query(50, ge=1, le=1000),
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         stmt = (
             select(Evaluation)
@@ -562,7 +561,7 @@ def create_app() -> FastAPI:
     async def compare_evals(
         a: str = Query(..., description="First evaluation ID"),
         b: str = Query(..., description="Second evaluation ID"),
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         eval_a = await session.get(Evaluation, a)
         eval_b = await session.get(Evaluation, b)
@@ -604,7 +603,7 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/trends/risk-score")
     async def risk_score_trend(
         days: int = Query(30, ge=1, le=365),
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         since = datetime.utcnow() - timedelta(days=days)
         stmt = (
@@ -626,7 +625,7 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/trends/coverage")
     async def coverage_trend(
         days: int = Query(30, ge=1, le=365),
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         since = datetime.utcnow() - timedelta(days=days)
         stmt = (
@@ -644,7 +643,7 @@ def create_app() -> FastAPI:
     # ======================================================================
 
     @app.get("/api/v1/redteam/runs")
-    async def list_redteam_runs(session: AsyncSession = Depends(get_session)):
+    async def list_redteam_runs(session: AsyncSession = Depends(get_session)):  # noqa: B008
         stmt = (
             select(Evaluation)
             .where(Evaluation.description.ilike("%redteam%"))
@@ -657,7 +656,7 @@ def create_app() -> FastAPI:
     @app.post("/api/v1/redteam/generate")
     async def redteam_generate(
         request: EvalJobRequest,
-        session: AsyncSession = Depends(get_session),
+        _session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         try:
             config_data = yaml.safe_load(request.config)
@@ -667,12 +666,12 @@ def create_app() -> FastAPI:
             tests = await engine.generate_tests(dry_run=True)
             return {"status": "success", "testCount": len(tests), "tests": tests[:50]}
         except Exception as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/api/v1/redteam/run", status_code=201)
     async def redteam_run(
         request: EvalJobRequest,
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         eval_id = _gen_id()
         obj = Evaluation(
@@ -692,7 +691,7 @@ def create_app() -> FastAPI:
         return {"id": eval_id, "status": "running", "url": f"/api/v1/evals/{eval_id}"}
 
     @app.post("/api/v1/redteam/cancel/{eval_id}")
-    async def redteam_cancel(eval_id: str, session: AsyncSession = Depends(get_session)):
+    async def redteam_cancel(eval_id: str, session: AsyncSession = Depends(get_session)):  # noqa: B008
         obj = await session.get(Evaluation, eval_id)
         if not obj:
             raise HTTPException(status_code=404, detail=f"Evaluation {eval_id} not found")
@@ -713,7 +712,7 @@ def create_app() -> FastAPI:
     # ======================================================================
 
     @app.get("/api/v1/teams")
-    async def list_teams(session: AsyncSession = Depends(get_session)):
+    async def list_teams(session: AsyncSession = Depends(get_session)):  # noqa: B008
         rows = (
             (await session.execute(select(Team).order_by(Team.created_at.desc()))).scalars().all()
         )
@@ -739,7 +738,7 @@ def create_app() -> FastAPI:
     @app.post("/api/v1/teams", status_code=201)
     async def create_team(
         request: CreateTeamRequest,
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         team_id = _gen_id()
         team = Team(id=team_id, name=request.name, description=request.description)
@@ -752,7 +751,7 @@ def create_app() -> FastAPI:
     async def add_team_member(
         team_id: str,
         request: AddMemberRequest,
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         team = await session.get(Team, team_id)
         if not team:
@@ -775,7 +774,7 @@ def create_app() -> FastAPI:
     @app.get("/api/v1/audit-logs")
     async def list_audit_logs(
         limit: int = Query(100, ge=1, le=10000),
-        session: AsyncSession = Depends(get_session),
+        session: AsyncSession = Depends(get_session),  # noqa: B008
     ):
         rows = (
             (

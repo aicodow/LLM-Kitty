@@ -8,9 +8,10 @@ of code with the ``@traced`` context manager.
 from __future__ import annotations
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generator, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +35,9 @@ class TracingConfig:
 
     enabled: bool = False
     exporter: str = "otlp"
-    endpoint: Optional[str] = None
+    endpoint: str | None = None
     service_name: str = "kitty"
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
 
 _tracer = None  # module-level tracer singleton
@@ -57,7 +58,7 @@ def init_tracing(config: TracingConfig) -> None:
         ImportError: When the required OpenTelemetry packages are not
             installed and the config requires them (enabled exporters).
     """
-    global _tracer, _provider  # noqa: PLW0603
+    global _tracer, _provider
 
     if not config.enabled:
         logger.debug("Tracing is disabled, skipping initialisation")
@@ -65,8 +66,8 @@ def init_tracing(config: TracingConfig) -> None:
 
     try:
         from opentelemetry import trace  # type: ignore[import-untyped]
-        from opentelemetry.sdk.trace import TracerProvider  # type: ignore[import-untyped]
         from opentelemetry.sdk.resources import Resource  # type: ignore[import-untyped]
+        from opentelemetry.sdk.trace import TracerProvider  # type: ignore[import-untyped]
     except ImportError as exc:
         msg = (
             "OpenTelemetry packages are not installed. "
@@ -85,10 +86,12 @@ def init_tracing(config: TracingConfig) -> None:
 
     if config.exporter == "otlp" and config.endpoint:
         try:
-            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # type: ignore[import-untyped] # noqa: E501
+            from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # type: ignore[import-untyped]
                 OTLPSpanExporter,
             )
-            from opentelemetry.sdk.trace.export import BatchSpanProcessor  # type: ignore[import-untyped] # noqa: E501
+            from opentelemetry.sdk.trace.export import (
+                BatchSpanProcessor,  # type: ignore[import-untyped]
+            )
         except ImportError as exc:
             msg = (
                 "OTLP exporter requested but opentelemetry-exporter-otlp-proto-grpc "
@@ -101,7 +104,10 @@ def init_tracing(config: TracingConfig) -> None:
         logger.info("Tracing initialised: OTLP exporter -> %s", config.endpoint)
 
     elif config.exporter == "console":
-        from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor  # type: ignore[import-untyped] # noqa: E501
+        from opentelemetry.sdk.trace.export import (  # type: ignore[import-untyped]
+            ConsoleSpanExporter,
+            SimpleSpanProcessor,
+        )
 
         _provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
         logger.info("Tracing initialised: console exporter")
@@ -116,7 +122,7 @@ def init_tracing(config: TracingConfig) -> None:
     _tracer = trace.get_tracer(config.service_name)
 
 
-def start_span(name: str, attributes: Optional[Dict[str, Any]] = None) -> Any:
+def start_span(name: str, attributes: dict[str, Any] | None = None) -> Any:
     """Start and return a new span.
 
     When tracing is not initialised a no-op span is returned.
@@ -209,7 +215,7 @@ def _get_status_error() -> Any:
 class _NoOpSpan:
     """Span that does nothing, used when OpenTelemetry is unavailable."""
 
-    def set_attributes(self, attributes: Dict[str, Any]) -> None:
+    def set_attributes(self, attributes: dict[str, Any]) -> None:
         pass
 
     def set_attribute(self, key: str, value: Any) -> None:
@@ -224,7 +230,7 @@ class _NoOpSpan:
     def end(self) -> None:
         pass
 
-    def __enter__(self) -> "_NoOpSpan":
+    def __enter__(self) -> _NoOpSpan:
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -234,8 +240,8 @@ class _NoOpSpan:
 class _NoOpTracer:
     """Tracer that returns no-op spans."""
 
-    def start_span(self, name: str, *args: Any, **kwargs: Any) -> _NoOpSpan:
+    def start_span(self, _name: str, *_args: Any, **_kwargs: Any) -> _NoOpSpan:
         return _NoOpSpan()
 
-    def start_as_current_span(self, name: str, *args: Any, **kwargs: Any) -> _NoOpSpan:
+    def start_as_current_span(self, _name: str, *_args: Any, **_kwargs: Any) -> _NoOpSpan:
         return _NoOpSpan()

@@ -27,13 +27,13 @@ class TestEvalPipelineIntegration:
         mock_provider.on_shutdown = AsyncMock()
 
         class MockRegistry:
-            async def create(self, provider_id: str, config: dict | None = None):
+            async def create(self, _provider_id: str, _config: dict | None = None):
                 return mock_provider
 
             async def shutdown(self):
                 await mock_provider.on_shutdown()
 
-            def get(self, provider_id: str):
+            def get(self, _provider_id: str):
                 return mock_provider
 
         pipeline = EvaluationPipeline(config, provider_registry=MockRegistry())
@@ -68,14 +68,14 @@ class TestEvalPipelineIntegration:
         )
 
         class MockRegistry:
-            async def create(self, provider_id: str, config: dict | None = None):
-                mock_provider.id.return_value = provider_id
+            async def create(self, _provider_id: str, _config: dict | None = None):
+                mock_provider.id.return_value = _provider_id
                 return mock_provider
 
             async def shutdown(self):
                 await mock_provider.on_shutdown()
 
-            def get(self, provider_id: str):
+            def get(self, _provider_id: str):
                 return mock_provider
 
         pipeline = EvaluationPipeline(config, provider_registry=MockRegistry())
@@ -116,14 +116,14 @@ class TestEvalPipelineIntegration:
         )
 
         class MockRegistry:
-            async def create(self, provider_id: str, config: dict | None = None):
-                mock_provider.id.return_value = provider_id
+            async def create(self, _provider_id: str, _config: dict | None = None):
+                mock_provider.id.return_value = _provider_id
                 return mock_provider
 
             async def shutdown(self):
                 await mock_provider.on_shutdown()
 
-            def get(self, provider_id: str):
+            def get(self, _provider_id: str):
                 return mock_provider
 
         pipeline = EvaluationPipeline(config, provider_registry=MockRegistry())
@@ -167,13 +167,13 @@ class TestEvalPipelineIntegration:
         )
 
         class MockRegistry:
-            async def create(self, provider_id: str, config: dict | None = None):
+            async def create(self, _provider_id: str, _config: dict | None = None):
                 return mock_provider
 
             async def shutdown(self):
                 await mock_provider.on_shutdown()
 
-            def get(self, provider_id: str):
+            def get(self, _provider_id: str):
                 return mock_provider
 
         pipeline = EvaluationPipeline(config, provider_registry=MockRegistry())
@@ -201,13 +201,13 @@ class TestEvalPipelineIntegration:
         )
 
         class MockRegistry:
-            async def create(self, provider_id: str, config: dict | None = None):
+            async def create(self, _provider_id: str, _config: dict | None = None):
                 return mock_provider
 
             async def shutdown(self):
                 await mock_provider.on_shutdown()
 
-            def get(self, provider_id: str):
+            def get(self, _provider_id: str):
                 return mock_provider
 
         pipeline = EvaluationPipeline(config, provider_registry=MockRegistry())
@@ -236,13 +236,13 @@ class TestEvalPipelineIntegration:
         )
 
         class MockRegistry:
-            async def create(self, provider_id: str, config: dict | None = None):
+            async def create(self, _provider_id: str, _config: dict | None = None):
                 return mock_provider
 
             async def shutdown(self):
                 await mock_provider.on_shutdown()
 
-            def get(self, provider_id: str):
+            def get(self, _provider_id: str):
                 return mock_provider
 
         pipeline = EvaluationPipeline(config, provider_registry=MockRegistry())

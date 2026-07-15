@@ -6,8 +6,6 @@ configurable assertions, and automated red-team test generation.
 
 from __future__ import annotations
 
-from typing import Any, Optional
-
 from kitty.types import (
     EvaluateResult,
     EvaluateStats,
@@ -21,14 +19,14 @@ __version__ = "0.1.0"
 # Re-exported names for the public API surface.  Users can write:
 #     from kitty import evaluate, EvaluationPipeline, KittyConfig, ...
 __all__ = [
-    "evaluate",
-    "EvaluationPipeline",
-    "KittyConfig",
     "EvaluateResult",
     "EvaluateStats",
+    "EvaluationPipeline",
     "GradingResult",
+    "KittyConfig",
     "TestCase",
     "__version__",
+    "evaluate",
 ]
 
 
@@ -71,7 +69,7 @@ class EvaluationPipeline:
             config: A fully resolved :class:`KittyConfig` instance.
         """
         self.config = config
-        self._result: Optional[EvaluateResult] = None
+        self._result: EvaluateResult | None = None
 
     def run(self) -> EvaluateResult:
         """Execute the evaluation and return the results.
@@ -94,6 +92,6 @@ class EvaluationPipeline:
         return result
 
     @property
-    def result(self) -> Optional[EvaluateResult]:
+    def result(self) -> EvaluateResult | None:
         """The result of the last :meth:`run`, or ``None`` if not yet run."""
         return self._result

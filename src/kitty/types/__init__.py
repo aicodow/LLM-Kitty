@@ -16,7 +16,6 @@ from kitty.types.config import (
     TargetConfig,
     TracingConfig,
 )
-
 from kitty.types.eval import (
     CompletedPrompt,
     EvaluateResult,
@@ -32,24 +31,24 @@ from kitty.types.eval import (
 )
 
 __all__ = [
-    # Config models
-    "KittyConfig",
-    "TargetConfig",
-    "EvaluateOptions",
-    "RedteamConfig",
-    "RedteamPluginRef",
-    "TracingConfig",
-    "OutputConfig",
-    # Eval models
-    "Severity",
-    "ResultFailureReason",
-    "TargetType",
-    "ProviderConfig",
-    "ProviderResponse",
-    "Prompt",
-    "TestCase",
     "CompletedPrompt",
-    "GradingResult",
+    "EvaluateOptions",
     "EvaluateResult",
     "EvaluateStats",
+    "GradingResult",
+    # Config models
+    "KittyConfig",
+    "OutputConfig",
+    "Prompt",
+    "ProviderConfig",
+    "ProviderResponse",
+    "RedteamConfig",
+    "RedteamPluginRef",
+    "ResultFailureReason",
+    # Eval models
+    "Severity",
+    "TargetConfig",
+    "TargetType",
+    "TestCase",
+    "TracingConfig",
 ]

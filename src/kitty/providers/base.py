@@ -68,12 +68,14 @@ class BaseProvider(ABC):
         Override to perform async initialisation (connection pooling,
         authentication handshakes, etc.).
         """
+        return
 
     async def on_shutdown(self) -> None:
         """Lifecycle hook: close connections, release resources.
 
         Override to close HTTP clients, database connections, etc.
         """
+        return
 
     def id(self) -> str:
         """Return the provider identifier."""
@@ -85,8 +87,8 @@ class BaseProvider(ABC):
 
 __all__ = [
     "BaseProvider",
-    "ProviderResponse",
-    "ProviderError",
     "ProviderAuthError",
+    "ProviderError",
     "ProviderRateLimitError",
+    "ProviderResponse",
 ]

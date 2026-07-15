@@ -9,6 +9,6 @@ Guardrail assertions are provided by :mod:`kitty.assertions.guardrails`.
 from kitty.assertions.engine import register_handler, run_assertions
 
 __all__ = [
-    "run_assertions",
     "register_handler",
+    "run_assertions",
 ]

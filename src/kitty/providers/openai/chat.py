@@ -60,7 +60,7 @@ class OpenAiChatProvider(BaseProvider):
     async def call_api(
         self,
         prompt: str,
-        context: dict[str, Any] | None = None,
+        _context: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
     ) -> ProviderResponse:
         """Send a chat completion request to the OpenAI-compatible API.

@@ -8,10 +8,10 @@ Configuration can be loaded from YAML files or constructed programmatically.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal
 
-from pydantic import ConfigDict, Field, field_validator, model_validator
 from pydantic import BaseModel as _PydanticBaseModel
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from kitty.types.eval import Severity, TargetType
 
@@ -36,9 +36,9 @@ class TargetConfig(BaseModel):
     """
 
     id: str = Field(min_length=1)
-    provider: Union[str, "ProviderConfig"]  # noqa: F821 — forward ref handled in __init__.py
+    provider: str | ProviderConfig
     config: dict[str, Any] = Field(default_factory=dict)
-    label: Optional[str] = None
+    label: str | None = None
 
 
 # ── Evaluation Options ───────────────────────────────────────────────────
@@ -65,9 +65,9 @@ class EvaluateOptions(BaseModel):
     cache: bool = True
     delay: int = 0
     show_progress_bar: bool = Field(default=True, alias="showProgressBar")
-    filter_first_n: Optional[int] = Field(default=None, alias="filterFirstN")
-    filter_sample: Optional[int] = Field(default=None, alias="filterSample")
-    filter_sample_seed: Optional[int] = Field(default=None, alias="filterSampleSeed")
+    filter_first_n: int | None = Field(default=None, alias="filterFirstN")
+    filter_sample: int | None = Field(default=None, alias="filterSample")
+    filter_sample_seed: int | None = Field(default=None, alias="filterSampleSeed")
 
 
 # ── Red Team Configuration ───────────────────────────────────────────────
@@ -83,7 +83,7 @@ class RedteamPluginRef(BaseModel):
     """
 
     id: str
-    num_tests: Optional[int] = Field(default=None, alias="numTests")
+    num_tests: int | None = Field(default=None, alias="numTests")
     config: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -100,13 +100,13 @@ class RedteamConfig(BaseModel):
         severity: Optional severity threshold for findings.
     """
 
-    purpose: Optional[str] = None
-    plugins: list[Union[str, RedteamPluginRef]] = Field(default_factory=list)
-    strategies: list[Union[str, dict[str, Any]]] = Field(default_factory=list)
+    purpose: str | None = None
+    plugins: list[str | RedteamPluginRef] = Field(default_factory=list)
+    strategies: list[str | dict[str, Any]] = Field(default_factory=list)
     num_tests: int = Field(default=5, alias="numTests")
     language: str = "en"
-    target_type: Optional[TargetType] = Field(default=None, alias="targetType")
-    severity: Optional[Severity] = None
+    target_type: TargetType | None = Field(default=None, alias="targetType")
+    severity: Severity | None = None
 
 
 # ── Tracing Configuration ────────────────────────────────────────────────
@@ -123,7 +123,7 @@ class TracingConfig(BaseModel):
 
     enabled: bool = False
     exporter: Literal["otlp", "console", "none"] = "none"
-    endpoint: Optional[str] = None
+    endpoint: str | None = None
 
 
 # ── Output Configuration ─────────────────────────────────────────────────
@@ -138,7 +138,7 @@ class OutputConfig(BaseModel):
     """
 
     format: Literal["json", "csv", "html", "sarif"] = "json"
-    path: Optional[Path] = None
+    path: Path | None = None
 
 
 # ── Top-Level Configuration ──────────────────────────────────────────────
@@ -163,9 +163,9 @@ class KittyConfig(BaseModel):
 
     description: str = ""
     targets: list[TargetConfig] = Field(min_length=1)
-    prompts: list[Union[str, dict[str, Any]]] = Field(default_factory=list)
-    tests: list[Union[str, dict[str, Any]]] = Field(default_factory=list)
-    redteam: Optional[RedteamConfig] = None
+    prompts: list[str | dict[str, Any]] = Field(default_factory=list)
+    tests: list[str | dict[str, Any]] = Field(default_factory=list)
+    redteam: RedteamConfig | None = None
     tracing: TracingConfig = Field(default_factory=TracingConfig)
     evaluate_options: EvaluateOptions = Field(
         default_factory=EvaluateOptions, alias="evaluateOptions"
@@ -199,7 +199,7 @@ class KittyConfig(BaseModel):
         return v
 
     @classmethod
-    def from_yaml(cls, path: Union[str, Path]) -> "KittyConfig":
+    def from_yaml(cls, path: str | Path) -> KittyConfig:
         """Load configuration from a YAML file.
 
         Args:
@@ -221,11 +221,11 @@ class KittyConfig(BaseModel):
         # Lazy import so PyYAML is an optional dependency.
         try:
             import yaml
-        except ImportError:
+        except ImportError as err:
             raise ImportError(
                 "PyYAML is required to load configuration from YAML. "
                 "Install it with: pip install pyyaml"
-            )
+            ) from err
 
         with resolved.open("r", encoding="utf-8") as fh:
             data = yaml.safe_load(fh)
@@ -240,17 +240,17 @@ class KittyConfig(BaseModel):
 
 # Forward reference needed for TargetConfig.provider union.
 # Import here (rather than at top) to avoid circular import at module level.
-from kitty.types.eval import ProviderConfig  # noqa: E402, F811
+from kitty.types.eval import ProviderConfig  # noqa: E402
 
 TargetConfig.model_rebuild()
 
 
 __all__ = [
-    "TargetConfig",
     "EvaluateOptions",
-    "RedteamPluginRef",
-    "RedteamConfig",
-    "TracingConfig",
-    "OutputConfig",
     "KittyConfig",
+    "OutputConfig",
+    "RedteamConfig",
+    "RedteamPluginRef",
+    "TargetConfig",
+    "TracingConfig",
 ]

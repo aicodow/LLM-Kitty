@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 
 from kitty.providers.base import BaseProvider, ProviderResponse
 from kitty.providers.registry import ProviderRegistry
-from kitty.types.config import KittyConfig, RedteamConfig as RedTeamConfig
+from kitty.types.config import KittyConfig
 
 
 class _MockOpenAIProvider(BaseProvider):
@@ -21,7 +20,7 @@ class _MockOpenAIProvider(BaseProvider):
     def __init__(self) -> None:
         pass
 
-    async def call_api(self, prompt: str, **kwargs) -> ProviderResponse:
+    async def call_api(self, _prompt: str, **_kwargs) -> ProviderResponse:
         return ProviderResponse(
             output="I'm sorry, I cannot assist with that request.",
             tokenUsage={"total": 42},
@@ -40,7 +39,7 @@ class _MockAnthropicProvider(BaseProvider):
     def __init__(self) -> None:
         pass
 
-    async def call_api(self, prompt: str, **kwargs) -> ProviderResponse:
+    async def call_api(self, _prompt: str, **_kwargs) -> ProviderResponse:
         return ProviderResponse(
             output="I apologize, but I cannot provide that information.",
             tokenUsage={"total": 64},

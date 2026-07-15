@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,10 @@ _SERVER_INFO = {
 
 
 def _make_request(
-    method: str, params: Optional[Dict[str, Any]] = None, *, _id: Any = 1
-) -> Dict[str, Any]:
+    method: str, params: dict[str, Any] | None = None, *, _id: Any = 1
+) -> dict[str, Any]:
     """Build a JSON-RPC 2.0 request object."""
-    msg: Dict[str, Any] = {
+    msg: dict[str, Any] = {
         "jsonrpc": "2.0",
         "method": method,
         "id": _id,
@@ -41,7 +41,7 @@ def _make_request(
     return msg
 
 
-def _make_success_response(_id: Any, result: Any) -> Dict[str, Any]:
+def _make_success_response(_id: Any, result: Any) -> dict[str, Any]:
     """Build a JSON-RPC 2.0 success response."""
     return {
         "jsonrpc": "2.0",
@@ -50,9 +50,9 @@ def _make_success_response(_id: Any, result: Any) -> Dict[str, Any]:
     }
 
 
-def _make_error_response(_id: Any, code: int, message: str, data: Any = None) -> Dict[str, Any]:
+def _make_error_response(_id: Any, code: int, message: str, data: Any = None) -> dict[str, Any]:
     """Build a JSON-RPC 2.0 error response."""
-    err: Dict[str, Any] = {
+    err: dict[str, Any] = {
         "code": code,
         "message": message,
     }
@@ -65,7 +65,7 @@ def _make_error_response(_id: Any, code: int, message: str, data: Any = None) ->
     }
 
 
-def _read_line() -> Optional[str]:
+def _read_line() -> str | None:
     """Read a single line from stdin (UTF-8)."""
     try:
         line = sys.stdin.readline()
@@ -76,7 +76,7 @@ def _read_line() -> Optional[str]:
         return None
 
 
-def _write_message(msg: Dict[str, Any]) -> None:
+def _write_message(msg: dict[str, Any]) -> None:
     """Write a JSON-RPC message as a single JSON line to stdout.
 
     Uses the MCP stdio transport framing: ``Content-Length: N\\r\\n``
@@ -93,7 +93,7 @@ def _write_message(msg: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def _eval_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+async def _eval_tool(params: dict[str, Any]) -> dict[str, Any]:
     """Run an evaluation using the Promptfoo evaluate API.
 
     Args:
@@ -120,7 +120,7 @@ async def _eval_tool(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": f"Evaluation failed: {exc}"}
 
 
-async def _redteam_run_tool(params: Dict[str, Any]) -> Dict[str, Any]:
+async def _redteam_run_tool(params: dict[str, Any]) -> dict[str, Any]:
     """Run a red-teaming evaluation.
 
     Args:
@@ -142,7 +142,7 @@ async def _redteam_run_tool(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"error": "promptfoo redteam module is not available"}
 
     try:
-        kwargs: Dict[str, Any] = {"config": config}
+        kwargs: dict[str, Any] = {"config": config}
         if plugins:
             kwargs["plugins"] = plugins
         results = run(**kwargs)
@@ -156,7 +156,7 @@ async def _redteam_run_tool(params: Dict[str, Any]) -> Dict[str, Any]:
 # Tool registry
 # ---------------------------------------------------------------------------
 
-_TOOLS: Dict[str, Dict[str, Any]] = {
+_TOOLS: dict[str, dict[str, Any]] = {
     "kitty_eval": {
         "description": "Run a Promptfoo evaluation and return results as JSON.",
         "input_schema": {
@@ -242,7 +242,7 @@ class MCPServer:
 
             _id = request.get("id")
             method: str = request.get("method", "")
-            params: Dict[str, Any] = request.get("params", {}) or {}
+            params: dict[str, Any] = request.get("params", {}) or {}
 
             response = await self._dispatch(method, params, _id)
             if response is not None:
@@ -251,9 +251,9 @@ class MCPServer:
     async def _dispatch(
         self,
         method: str,
-        params: Dict[str, Any],
+        params: dict[str, Any],
         _id: Any,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Route a JSON-RPC method to the appropriate handler.
 
         Args:
@@ -297,7 +297,7 @@ class MCPServer:
         # --- tools/call ---
         if method == "tools/call":
             tool_name: str = params.get("name", "")
-            tool_args: Dict[str, Any] = params.get("arguments", {})
+            tool_args: dict[str, Any] = params.get("arguments", {})
 
             tool = _TOOLS.get(tool_name)
             if tool is None:

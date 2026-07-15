@@ -22,7 +22,6 @@ import json
 import logging
 import os
 import time
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -76,11 +75,9 @@ def main_callback(
 @eval_app.command("run")
 def eval_run(
     config: str = typer.Option("kittyconfig.yaml", "--config", "-c", help="Path to config file"),
-    output: Optional[str] = typer.Option(
-        None, "--output", "-o", help="Export path for results JSON"
-    ),
+    output: str | None = typer.Option(None, "--output", "-o", help="Export path for results JSON"),
     no_cache: bool = typer.Option(False, "--no-cache", help="Disable response cache"),
-    max_concurrency: Optional[int] = typer.Option(
+    max_concurrency: int | None = typer.Option(
         None, "--max-concurrency", help="Override max concurrency"
     ),
     resume: bool = typer.Option(False, "--resume", help="Resume a previous evaluation"),
@@ -208,8 +205,8 @@ def redteam_run(
 
 @plugins_app.command("list")
 def plugins_list(
-    category: Optional[str] = typer.Option(None, "--category", "-c", help="Filter by category"),
-    tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    category: str | None = typer.Option(None, "--category", "-c", help="Filter by category"),
+    tag: str | None = typer.Option(None, "--tag", "-t", help="Filter by tag"),
 ) -> None:
     """List available red-team plugins."""
 
@@ -286,7 +283,7 @@ def providers_test(
             provider = registry.get(provider_id)
         except KeyError:
             typer.echo(f"Error: Provider '{provider_id}' not found in registry.", err=True)
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1)  # noqa: B904
 
         typer.echo(f"Testing provider: {provider_id}")
 
@@ -307,7 +304,7 @@ def providers_test(
                 typer.echo(f"Latency: {elapsed * 1000:.1f} ms")
         except Exception as exc:
             elapsed = time.monotonic() - start
-            typer.echo(f"Status: error")
+            typer.echo("Status: error")
             typer.echo(f"Error:  {exc}", err=True)
             if measure_latency:
                 typer.echo(f"Latency: {elapsed * 1000:.1f} ms")
@@ -366,7 +363,7 @@ def server_start(
 @app.command("cache")
 def cache_command(
     command: str = typer.Argument(..., help="stats | clear"),
-    provider: Optional[str] = typer.Option(None, "--provider", help="Filter by provider"),
+    provider: str | None = typer.Option(None, "--provider", help="Filter by provider"),
 ) -> None:
     """Manage the evaluation response cache."""
 
@@ -403,7 +400,7 @@ def db_command(
         from alembic.config import Config as AlembicConfig
     except ImportError:
         typer.echo("Error: alembic is not installed. Install with: pip install alembic", err=True)
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1)  # noqa: B904
 
     alembic_cfg = AlembicConfig("alembic.ini")
 

@@ -12,7 +12,7 @@ import logging
 import random
 import time
 from collections.abc import Awaitable, Callable
-from typing import Any, Optional, TypeVar
+from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -125,9 +125,9 @@ class ConcurrencyGate:
 
     async def __aexit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[object],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None,
     ) -> None:
         """Release the semaphore."""
         self._semaphore.release()
@@ -195,14 +195,11 @@ async def retry_with_backoff(
     Raises:
         The last exception encountered if all retries are exhausted.
     """
-    last_exc: Optional[BaseException] = None
 
     for attempt in range(1, max_retries + 1):
         try:
             return await coro_factory()
         except Exception as exc:
-            last_exc = exc
-
             if not _is_retryable(exc):
                 raise
 

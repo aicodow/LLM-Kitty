@@ -157,7 +157,7 @@ async def _run_guardrail_single(
         optionally ``namedScores``.
     """
     assertion_type = assertion.get("type", "guardrails").lower()
-    output = response.output.lower()
+    response.output.lower()
 
     # Determine the categories to check.
     categories = _resolve_categories(assertion_type, assertion.get("value"))
@@ -229,7 +229,7 @@ _GUARDRAIL_KEYWORDS: dict[str, list[str]] = {
 def _check_via_keywords(
     output: str,
     categories: list[str],
-    assertion: dict[str, Any],
+    _assertion: dict[str, Any],
 ) -> dict[str, Any]:
     """Check the output for guardrail-violating keywords.
 
@@ -272,10 +272,10 @@ def _check_via_keywords(
 
 
 async def _check_via_moderation_api(
-    prompt: str,
-    response: ProviderResponse,
-    categories: list[str],
-    config: dict[str, Any],
+    _prompt: str,
+    _response: ProviderResponse,
+    _categories: list[str],
+    _config: dict[str, Any],
 ) -> dict[str, Any]:
     """Check content via a moderation provider API.
 

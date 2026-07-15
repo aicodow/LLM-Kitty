@@ -7,12 +7,12 @@ Cache keys are built using SHA-256 hashing to match Promptfoo's scheme.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import logging
 import os
-import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +31,8 @@ class CacheManager:
 
     def __init__(
         self,
-        cache_dir: Optional[Path] = None,
-        redis_url: Optional[str] = None,
+        cache_dir: Path | None = None,
+        redis_url: str | None = None,
         ttl: int = 86400,
     ) -> None:
         """Initialize the cache manager.
@@ -71,7 +71,7 @@ class CacheManager:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _resolve_cache_dir(cache_dir: Optional[Path]) -> Path:
+    def _resolve_cache_dir(cache_dir: Path | None) -> Path:
         """Resolve the disk cache directory path."""
         env_path = os.environ.get("KITTY_CACHE_PATH")
         if env_path:
@@ -93,7 +93,7 @@ class CacheManager:
         self._disk = diskcache.Cache(str(self._cache_dir))
         logger.debug("Disk cache initialised at %s", self._cache_dir)
 
-    def _init_redis(self, redis_url: Optional[str]) -> None:
+    def _init_redis(self, redis_url: str | None) -> None:
         """Attempt to connect to the optional Redis backend."""
         if not redis_url:
             return
@@ -115,7 +115,7 @@ class CacheManager:
     # Public API
     # ------------------------------------------------------------------
 
-    async def get(self, provider_id: str, prompt: str) -> Optional[Dict[str, Any]]:
+    async def get(self, provider_id: str, prompt: str) -> dict[str, Any] | None:
         """Retrieve a cached response.
 
         Args:
@@ -156,7 +156,7 @@ class CacheManager:
 
         return None
 
-    async def set(self, provider_id: str, prompt: str, response: Dict[str, Any]) -> None:
+    async def set(self, provider_id: str, prompt: str, response: dict[str, Any]) -> None:
         """Store a response in the cache.
 
         Args:
@@ -185,7 +185,7 @@ class CacheManager:
             except Exception as exc:
                 logger.debug("Redis cache set failed: %s", exc)
 
-    async def clear(self, provider_id: Optional[str] = None) -> int:
+    async def clear(self, provider_id: str | None = None) -> int:
         """Clear cached entries, optionally scoped to a provider.
 
         Args:
@@ -233,7 +233,7 @@ class CacheManager:
         logger.info("Cleared %d cache entries (provider=%s)", count, provider_id)
         return count
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """Return cache statistics.
 
         Returns:
@@ -242,12 +242,8 @@ class CacheManager:
         """
         disk_size = 0
         if not self.disabled and self._disk is not None:
-            try:
-                import diskcache
-
+            with contextlib.suppress(Exception):
                 disk_size = self._disk.volume() if hasattr(self._disk, "volume") else 0
-            except Exception:
-                pass
 
         return {
             "disk_size": disk_size,

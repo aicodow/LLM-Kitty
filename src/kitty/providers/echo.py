@@ -23,8 +23,8 @@ class EchoProvider(BaseProvider):
     async def call_api(
         self,
         prompt: str,
-        context: dict[str, Any] | None = None,
-        options: dict[str, Any] | None = None,
+        _context: dict[str, Any] | None = None,
+        _options: dict[str, Any] | None = None,
     ) -> ProviderResponse:
         """Return the prompt verbatim as the provider output.
 

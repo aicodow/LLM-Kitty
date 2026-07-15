@@ -17,7 +17,7 @@ class _DummyProvider(BaseProvider):
 
     provider_id: str = "dummy:test:provider"
 
-    async def call_api(self, prompt: str, **kwargs) -> ProviderResponse:
+    async def call_api(self, _prompt: str, **_kwargs) -> ProviderResponse:
         return ProviderResponse(output="dummy response")
 
     async def id(self) -> str:
@@ -29,7 +29,7 @@ class AnotherDummyProvider(BaseProvider):
 
     provider_id: str = "dummy:other:provider"
 
-    async def call_api(self, prompt: str, **kwargs) -> ProviderResponse:
+    async def call_api(self, _prompt: str, **_kwargs) -> ProviderResponse:
         return ProviderResponse(output="other dummy response")
 
     async def id(self) -> str:

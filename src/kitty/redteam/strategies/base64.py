@@ -33,7 +33,7 @@ class Base64Strategy(BaseStrategy):
     async def transform(
         self,
         test_cases: list[TestCase],
-        config: dict[str, Any] | None = None,
+        _config: dict[str, Any] | None = None,
     ) -> list[TestCase]:
         """Base64-encode the prompt of each test case.
 

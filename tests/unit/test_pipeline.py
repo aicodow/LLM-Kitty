@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
-import pytest
-
 from kitty.exceptions import ProviderError
-from kitty.pipeline.evaluator import EvaluationPipeline, evaluate
+from kitty.pipeline.evaluator import EvaluationPipeline
 from kitty.types import EvaluateResult, ProviderResponse
 from kitty.types.config import KittyConfig
 
@@ -18,13 +16,13 @@ class _MockProviderRegistry:
     def __init__(self, mock_provider):
         self._mock = mock_provider
 
-    async def create(self, provider_id: str, config: dict | None = None):
+    async def create(self, _provider_id: str, _config: dict | None = None):
         return self._mock
 
     async def shutdown(self):
         await self._mock.on_shutdown()
 
-    def get(self, provider_id: str):
+    def get(self, _provider_id: str):
         return self._mock
 
 

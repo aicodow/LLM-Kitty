@@ -7,7 +7,7 @@ to test whether a provider's safety measures can be circumvented.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, ClassVar
 
 from kitty.redteam.plugins.base import TestCase
 from kitty.redteam.strategies.base import BaseStrategy
@@ -31,7 +31,7 @@ class JailbreakStrategy(BaseStrategy):
     strategy_id: str = "jailbreak"
     strategy_label: str = "Jailbreak Prompt Wrapping"
 
-    TEMPLATES: list[dict[str, str]] = [
+    TEMPLATES: ClassVar[list[dict[str, str]]] = [
         # ------------------------------------------------------------------
         # Developer Mode
         # ------------------------------------------------------------------

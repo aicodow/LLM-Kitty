@@ -10,11 +10,11 @@ from __future__ import annotations
 import importlib
 import logging
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 import yaml
 
-from kitty.redteam.plugins.base import PluginContext, RedteamPluginBase, TestCase
+from kitty.redteam.plugins.base import RedteamPluginBase
 from kitty.redteam.plugins.manifest import PluginManifest, Severity
 
 logger = logging.getLogger(__name__)
@@ -52,14 +52,14 @@ class PluginRegistry:
         USER_DIRS: List of user plugin directory paths.
     """
 
-    BUILTIN_DIR: Path = Path(__file__).resolve().parent / "builtin"
-    USER_DIRS: list[Path] = [
+    BUILTIN_DIR: ClassVar[Path] = Path(__file__).resolve().parent / "builtin"
+    USER_DIRS: ClassVar[list[Path]] = [
         Path.home() / ".kitty" / "plugins",
         Path.cwd() / "plugins",
     ]
 
-    _manifests: dict[str, PluginManifest] = {}
-    _plugins: dict[str, RedteamPluginBase] = {}
+    _manifests: ClassVar[dict[str, PluginManifest]] = {}
+    _plugins: ClassVar[dict[str, RedteamPluginBase]] = {}
 
     # ------------------------------------------------------------------
     # Discovery
@@ -242,7 +242,7 @@ class PluginRegistry:
     def _load_python_plugin(
         cls,
         directory: Path,
-        default_category: str = "custom",
+        _default_category: str = "custom",
     ) -> None:
         """Import a Python plugin package from a directory.
 

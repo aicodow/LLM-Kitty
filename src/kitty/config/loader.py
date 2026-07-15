@@ -3,7 +3,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, Field
@@ -76,7 +76,7 @@ def safe_resolve_path(path: str) -> Path:
             base directory.
     """
     resolved = Path(path).expanduser().resolve()
-    allowed: List[Path] = [
+    allowed: list[Path] = [
         Path.cwd().resolve(),
         Path("~/.kitty").expanduser().resolve(),
     ]
@@ -131,7 +131,7 @@ def resolve_env_vars(value: Any) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def load_yaml_config(path: str) -> Dict[str, Any]:
+def load_yaml_config(path: str) -> dict[str, Any]:
     """Load a YAML configuration file and resolve all environment variables.
 
     Args:
@@ -149,8 +149,8 @@ def load_yaml_config(path: str) -> Dict[str, Any]:
         ValueError: If *path* is outside allowed directories.
     """
     resolved_path = safe_resolve_path(path)
-    with open(resolved_path, "r", encoding="utf-8") as f:
-        data: Optional[Dict[str, Any]] = yaml.load(f, Loader=SafeYamlLoader)
+    with open(resolved_path, encoding="utf-8") as f:
+        data: dict[str, Any] | None = yaml.load(f, Loader=SafeYamlLoader)
     return resolve_env_vars(data or {})
 
 
@@ -166,7 +166,7 @@ class KittyConfig(BaseModel):
         providers: Mapping of provider identifiers to their configuration.
         default_provider: Default provider to use when none is specified.
         max_tokens: Maximum tokens for generated responses.
-        temperature: Sampling temperature (0.0 – 2.0).
+        temperature: Sampling temperature (0.0 - 2.0).
         timeout: Request timeout in seconds.
         log_level: Logging verbosity level.
         plugins: List of plugin module paths to load.
@@ -174,7 +174,7 @@ class KittyConfig(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    providers: Dict[str, Dict[str, Any]] = Field(
+    providers: dict[str, dict[str, Any]] = Field(
         default_factory=dict,
         description="Provider configurations keyed by provider ID",
     )
@@ -202,7 +202,7 @@ class KittyConfig(BaseModel):
         default="INFO",
         description="Logging level",
     )
-    plugins: List[str] = Field(
+    plugins: list[str] = Field(
         default_factory=list,
         description="Plugin module paths to load",
     )

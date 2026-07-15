@@ -39,7 +39,8 @@ from __future__ import annotations
 
 import json as json_module
 import re
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from kitty.types.eval import GradingResult, ProviderResponse
 
@@ -186,10 +187,10 @@ async def _run_single_assertion(
 
 
 async def _handle_contains(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the response output contains the expected substring.
 
@@ -201,7 +202,6 @@ async def _handle_contains(
 
     if isinstance(value, list):
         passed = any(str(v) in output for v in value)
-        found = [str(v) for v in value if str(v) in output]
         reason = "Output contains expected text" if passed else f"None of {value} found in output"
     else:
         value_str = str(value)
@@ -220,10 +220,10 @@ async def _handle_contains(
 
 
 async def _handle_not_contains(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the response output does **not** contain banned strings.
 
@@ -246,10 +246,10 @@ async def _handle_not_contains(
 
 
 async def _handle_regex(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the response output matches a regular expression.
 
@@ -274,10 +274,10 @@ async def _handle_regex(
 
 
 async def _handle_equals(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the response output equals the expected value (trimmed).
 
@@ -301,10 +301,10 @@ async def _handle_equals(
 
 
 async def _handle_starts_with(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the response output starts with the expected prefix.
 
@@ -325,10 +325,10 @@ async def _handle_starts_with(
 
 
 async def _handle_is_json(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the response output is valid JSON.
 
@@ -372,10 +372,10 @@ async def _handle_is_json(
 
 
 async def _handle_latency(
-    prompt: str,
+    _prompt: str,
     response: ProviderResponse,
     assertion: dict[str, Any],
-    registry: Any,
+    _registry: Any,
 ) -> dict[str, Any]:
     """Check that the provider response latency is within an acceptable range.
 
@@ -434,10 +434,10 @@ async def _handle_latency(
 
 
 async def _handle_llm_rubric(
-    prompt: str,
-    response: ProviderResponse,
-    assertion: dict[str, Any],
-    registry: Any,
+    _prompt: str,
+    _response: ProviderResponse,
+    _assertion: dict[str, Any],
+    _registry: Any,
 ) -> dict[str, Any]:
     """LLM-as-judge rubric: ask a grader model whether the output meets criteria.
 
@@ -457,10 +457,10 @@ async def _handle_llm_rubric(
 
 
 async def _handle_factuality(
-    prompt: str,
-    response: ProviderResponse,
-    assertion: dict[str, Any],
-    registry: Any,
+    _prompt: str,
+    _response: ProviderResponse,
+    _assertion: dict[str, Any],
+    _registry: Any,
 ) -> dict[str, Any]:
     """Factuality check: verify the output is factual relative to the prompt.
 

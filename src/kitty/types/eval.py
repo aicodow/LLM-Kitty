@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import enum
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import ConfigDict, Field, model_validator
 from pydantic import BaseModel as _PydanticBaseModel
+from pydantic import ConfigDict, Field, model_validator
 
 
 class BaseModel(_PydanticBaseModel):
@@ -64,7 +64,7 @@ class ProviderConfig(BaseModel):
 
     id: str
     config: dict[str, Any] = Field(default_factory=dict)
-    label: Optional[str] = None
+    label: str | None = None
 
 
 class ProviderResponse(BaseModel):
@@ -81,7 +81,7 @@ class ProviderResponse(BaseModel):
     output: str
     token_usage: dict[str, Any] = Field(default_factory=dict, alias="tokenUsage")
     cached: bool = False
-    cost: Optional[float] = None
+    cost: float | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -98,8 +98,8 @@ class Prompt(BaseModel):
     """
 
     raw: str
-    display: Optional[str] = None
-    label: Optional[str] = None
+    display: str | None = None
+    label: str | None = None
 
 
 class TestCase(BaseModel):
@@ -115,10 +115,10 @@ class TestCase(BaseModel):
         metadata: Arbitrary metadata attached to this test case.
     """
 
-    id: Optional[str] = None
-    description: Optional[str] = None
+    id: str | None = None
+    description: str | None = None
     prompt: str = Field(min_length=1)
-    provider_id: Optional[str] = Field(default=None, alias="providerId")
+    provider_id: str | None = Field(default=None, alias="providerId")
     assertions: list[dict[str, Any]] = Field(default_factory=list)
     vars: dict[str, Any] = Field(default_factory=dict)
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -135,9 +135,9 @@ class CompletedPrompt(BaseModel):
     """
 
     prompt: Prompt
-    provider_response: Optional[ProviderResponse] = Field(default=None, alias="providerResponse")
-    raw: Optional[str] = None
-    error: Optional[str] = None
+    provider_response: ProviderResponse | None = Field(default=None, alias="providerResponse")
+    raw: str | None = None
+    error: str | None = None
 
 
 # ── Grading Models ───────────────────────────────────────────────────────
@@ -161,8 +161,8 @@ class GradingResult(BaseModel):
     reason: str = ""
     named_scores: dict[str, float] = Field(default_factory=dict, alias="namedScores")
     tokens_used: dict[str, Any] = Field(default_factory=dict, alias="tokensUsed")
-    assertion: Optional[dict[str, Any]] = None
-    component_results: Optional[list[Any]] = Field(default=None, alias="componentResults")
+    assertion: dict[str, Any] | None = None
+    component_results: list[Any] | None = Field(default=None, alias="componentResults")
 
     @model_validator(mode="after")
     def _enforce_passed_from_score(self) -> GradingResult:
@@ -218,19 +218,19 @@ class EvaluateResult(BaseModel):
     results: list[dict[str, Any]] = Field(default_factory=list)
     stats: EvaluateStats = Field(default_factory=EvaluateStats)
     vulnerabilities: list[dict[str, Any]] = Field(default_factory=list)
-    risk_score: Optional[float] = Field(default=None, alias="riskScore")
+    risk_score: float | None = Field(default=None, alias="riskScore")
 
 
 __all__ = [
-    "Severity",
-    "ResultFailureReason",
-    "TargetType",
+    "CompletedPrompt",
+    "EvaluateResult",
+    "EvaluateStats",
+    "GradingResult",
+    "Prompt",
     "ProviderConfig",
     "ProviderResponse",
-    "Prompt",
+    "ResultFailureReason",
+    "Severity",
+    "TargetType",
     "TestCase",
-    "CompletedPrompt",
-    "GradingResult",
-    "EvaluateStats",
-    "EvaluateResult",
 ]

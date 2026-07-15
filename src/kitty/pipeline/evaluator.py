@@ -33,6 +33,7 @@ shutdown always runs in a ``try`` / ``finally`` block.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import itertools
 import signal
 import time
@@ -207,7 +208,7 @@ class EvaluationPipeline:
     # ── Dialog Rail: Test Case Construction ────────────────────────────────
 
     def _build_test_cases(self) -> list[TestCase]:
-        """Expand ``prompts × tests × vars`` into a flat list of ``TestCase``.
+        """Expand ``prompts x tests x vars`` into a flat list of ``TestCase``.
 
         The expansion logic mirrors Promptfoo's test-case builder:
 
@@ -215,7 +216,7 @@ class EvaluationPipeline:
           assertions and no variable interpolation.
         * Tests that are dicts may carry ``prompt``, ``vars``, ``assert`` /
           ``assertions``, and ``metadata`` keys.  When ``vars`` is present,
-          the **Cartesian product** of all var values is computed so that
+          the product of all var values is computed so that
           every combination becomes its own ``TestCase``.
         * If a prompt string contains Jinja2 delimiters (``{{ }}`` or
           ``{% %}``) it is rendered through Jinja2 before being stored.
@@ -253,7 +254,7 @@ class EvaluationPipeline:
                 keys = list(vars_data.keys())
                 value_lists = list(vars_data.values())
                 for combo in _cartesian_product(value_lists):
-                    vars_dict = dict(zip(keys, combo))
+                    vars_dict = dict(zip(keys, combo, strict=False))
                     rendered = self._render_prompt(raw_prompt, vars_dict)
                     cases.append(
                         TestCase(
@@ -345,7 +346,7 @@ class EvaluationPipeline:
     ) -> list[dict[str, Any]]:
         """Run every test case through every provider with concurrency gating.
 
-        Each test-case × provider pair is wrapped in a per-call timeout.
+        Each test-case/provider pair is wrapped in a per-call timeout.
         Provider call errors are captured and classified rather than
         aborting the batch.  The overall evaluation also has a
         ``max_eval_time_ms`` ceiling.
@@ -359,7 +360,7 @@ class EvaluationPipeline:
             async with self._semaphore:  # type: ignore[union-attr]
                 return await self._execute_single(tc, provider)
 
-        # Flatten test_cases × providers into a list of tasks.
+        # Flatten test_cases x providers into a list of tasks.
         tasks = [_run_one(tc, provider) for tc in test_cases for provider in providers]
 
         if not tasks:
@@ -372,9 +373,11 @@ class EvaluationPipeline:
                 asyncio.gather(*tasks, return_exceptions=True),
                 timeout=timeout_sec,
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as _timeout_err:
             self._interrupted = True
-            raise EvalTimeoutError(f"Evaluation timed out after {timeout_sec:.0f}s")
+            raise EvalTimeoutError(
+                f"Evaluation timed out after {timeout_sec:.0f}s"
+            ) from _timeout_err
 
         for item in gathered:
             if isinstance(item, BaseException):
@@ -646,18 +649,18 @@ class EvaluationPipeline:
         """
         try:
 
-            def _handler(signum: int, _frame: Any) -> None:
+            def _handler(_signum: int, _frame: Any) -> None:
                 if self._interrupted:
-                    logger.warning("interrupt_signal_ignored", signum=signum)
+                    logger.warning("interrupt_signal_ignored", signum=_signum)
                     return
-                logger.warning("interrupt_signal_received", signum=signum)
+                logger.warning("interrupt_signal_received", signum=_signum)
                 self._interrupted = True
 
             self._original_sigint = signal.signal(signal.SIGINT, _handler)
 
             if hasattr(signal, "SIGTERM"):
 
-                def _term_handler(signum: int, _frame: Any) -> None:
+                def _term_handler(_signum: int, _frame: Any) -> None:
                     self._interrupted = True
                     logger.warning("signal_sigterm_received")
 
@@ -669,10 +672,8 @@ class EvaluationPipeline:
     def _restore_signal_handler(self) -> None:
         """Restore the original SIGINT handler if we replaced it."""
         if self._original_sigint is not None:
-            try:
+            with contextlib.suppress(ValueError, OSError):
                 signal.signal(signal.SIGINT, self._original_sigint)
-            except (ValueError, OSError):
-                pass
             self._original_sigint = None
 
     # ── Provider Shutdown ──────────────────────────────────────────────────
@@ -732,7 +733,7 @@ async def evaluate(  # type: ignore[no-redef]
     ConfigNotFoundError
         If a file path does not exist.
     """
-    if isinstance(config, (str, Path)):
+    if isinstance(config, str | Path):
         validated = KittyConfig.from_yaml(config)
     elif isinstance(config, dict):
         validated = KittyConfig.model_validate(config)

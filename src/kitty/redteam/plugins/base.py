@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import itertools
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 from jinja2 import Template as Jinja2Template
 
@@ -107,7 +107,7 @@ class RedteamPluginBase(ABC):
     manifest: PluginManifest
     """Plugin manifest describing this plugin's metadata and configuration."""
 
-    SUPPORTED_PROVIDERS: list[str] = []
+    SUPPORTED_PROVIDERS: ClassVar[list[str]] = []
     """List of supported provider IDs. Empty means all providers are supported."""
 
     @property
@@ -115,7 +115,7 @@ class RedteamPluginBase(ABC):
         """Return the unique identifier for this plugin."""
         return self.manifest.id
 
-    def get_templates(self, context: PluginContext) -> list[str]:
+    def get_templates(self, _context: PluginContext) -> list[str]:
         """Return the list of template strings to render.
 
         Override this method to dynamically select templates based on
@@ -129,7 +129,7 @@ class RedteamPluginBase(ABC):
         """
         return list(self.manifest.templates)
 
-    def get_assertions(self, context: PluginContext) -> list[dict[str, Any]]:
+    def get_assertions(self, _context: PluginContext) -> list[dict[str, Any]]:
         """Return the list of assertion dictionaries for generated tests.
 
         Override this method to dynamically adjust assertions based on
@@ -143,7 +143,7 @@ class RedteamPluginBase(ABC):
         """
         return [dict(a) for a in self.manifest.assertions]
 
-    def get_vars(self, context: PluginContext) -> dict[str, list[str]]:
+    def get_vars(self, _context: PluginContext) -> dict[str, list[str]]:
         """Return the variable dictionary for template rendering.
 
         Override this method to dynamically supply variable values
@@ -163,6 +163,7 @@ class RedteamPluginBase(ABC):
         Subclasses can override this to perform async initialization
         such as loading external data or validating configuration.
         """
+        return
 
     async def generate_tests(
         self,

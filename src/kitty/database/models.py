@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, ClassVar
 
 from sqlalchemy import (
     Boolean,
-    Column,
     DateTime,
     Float,
     ForeignKey,
@@ -20,17 +19,15 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    create_engine,
 )
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 
 class Base(DeclarativeBase):
     """Declarative base for all Kitty ORM models."""
 
-    type_annotation_map = {
+    type_annotation_map: ClassVar[dict] = {
         dict[str, Any]: JSON,
         dict[str, str]: JSON,
     }
@@ -62,7 +59,7 @@ class Evaluation(Base):
     __tablename__ = "evaluations"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid_str)
-    description: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+    description: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     config_blob: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -70,7 +67,7 @@ class Evaluation(Base):
         nullable=False,
         index=True,
     )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="running", nullable=False)
 
     total_tests: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -78,10 +75,10 @@ class Evaluation(Base):
     total_failed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_errors: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     pass_rate: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
-    risk_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    risk_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Relationships
-    results: Mapped[list["EvalResult"]] = relationship(
+    results: Mapped[list[EvalResult]] = relationship(
         "EvalResult",
         back_populates="evaluation",
         cascade="all, delete-orphan",
@@ -117,20 +114,20 @@ class EvalResult(Base):
     prompt_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     provider_id: Mapped[str] = mapped_column(String(256), nullable=False)
     prompt_raw: Mapped[str] = mapped_column(Text, nullable=False)
-    response_output: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    response_output: Mapped[str | None] = mapped_column(Text, nullable=True)
     response_token_usage: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     passed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     reason: Mapped[str] = mapped_column(Text, default="", nullable=False)
-    failure_reason: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    plugin_id: Mapped[Optional[str]] = mapped_column(String(256), nullable=True, index=True)
-    strategy_id: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
-    severity: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    failure_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    plugin_id: Mapped[str | None] = mapped_column(String(256), nullable=True, index=True)
+    strategy_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    severity: Mapped[str | None] = mapped_column(String(32), nullable=True)
     metadata_blob: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, nullable=False)
 
     # Relationships
-    evaluation: Mapped["Evaluation"] = relationship("Evaluation", back_populates="results")
+    evaluation: Mapped[Evaluation] = relationship("Evaluation", back_populates="results")
 
     def __repr__(self) -> str:
         """Return a short representation of the eval result."""
@@ -205,8 +202,8 @@ class AuditLog(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     action: Mapped[str] = mapped_column(String(256), nullable=False)
-    resource: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    resource: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     metadata_blob: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=_utcnow, nullable=False, index=True

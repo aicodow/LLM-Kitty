@@ -64,7 +64,7 @@ class AnthropicMessagesProvider(BaseProvider):
     async def call_api(
         self,
         prompt: str,
-        context: dict[str, Any] | None = None,
+        _context: dict[str, Any] | None = None,
         options: dict[str, Any] | None = None,
     ) -> ProviderResponse:
         """Send a message to the Anthropic Messages API.
@@ -156,9 +156,7 @@ class AnthropicMessagesProvider(BaseProvider):
         parts: list[str] = []
         for block in data.get("content", []):
             block_type = block.get("type")
-            if block_type == "text":
-                parts.append(block.get("text", ""))
-            elif block_type == "thinking":
+            if block_type == "text" or block_type == "thinking":
                 parts.append(block.get("text", ""))
         return "\n".join(parts) if parts else ""
 

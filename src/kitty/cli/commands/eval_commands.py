@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
 
 import typer
 
@@ -12,15 +11,15 @@ import typer
 
 def run(
     config: str = typer.Option("kittyconfig.yaml", "--config", "-c"),
-    output: Optional[str] = typer.Option(None, "--output", "-o"),
+    output: str | None = typer.Option(None, "--output", "-o"),
     no_cache: bool = typer.Option(False, "--no-cache"),
-    max_concurrency: Optional[int] = typer.Option(None, "--max-concurrency"),
-    resume: bool = typer.Option(False, "--resume"),
-    retry_errors: bool = typer.Option(False, "--retry-errors"),
+    max_concurrency: int | None = typer.Option(None, "--max-concurrency"),
+    _resume: bool = typer.Option(False, "--resume"),
+    _retry_errors: bool = typer.Option(False, "--retry-errors"),
 ) -> None:
     async def _run() -> None:
-        from kitty.pipeline.evaluator import evaluate
         from kitty.config.loader import load_kitty_config
+        from kitty.pipeline.evaluator import evaluate
 
         config_obj = load_kitty_config(config)
         if max_concurrency is not None:
@@ -31,9 +30,7 @@ def run(
             os.environ["KITTY_DISABLE_CACHE"] = "1"
         typer.echo(f"Starting evaluation: {config_obj.description or config}")
         result = await evaluate(config_obj)
-        typer.echo(
-            f"\nResults: {result.stats.totalPassed}/{result.stats.totalTests} passed ({result.stats.passRate:.1%})"
-        )
+        typer.echo(f"\nResults: {result.stats.totalPassed}/{result.stats.totalTests}")
         if result.stats.totalErrors:
             typer.echo(f"Errors: {result.stats.totalErrors}")
         if output:
@@ -49,8 +46,9 @@ def list_evals(
     limit: int = typer.Option(20, "--limit", "-l"),
 ) -> None:
     async def _list() -> None:
-        from kitty.database import get_session, init_db
         from sqlalchemy import select
+
+        from kitty.database import get_session, init_db
         from kitty.database.models import Evaluation
 
         await init_db()
@@ -59,16 +57,16 @@ def list_evals(
                 select(Evaluation).order_by(Evaluation.created_at.desc()).limit(limit)
             )
             for e in result.scalars().all():
-                typer.echo(
-                    f"{e.id[:8]}  {e.created_at.isoformat()[:19]}  {e.status:12s}  {e.pass_rate:.0%}"
-                )
+                tid = e.id[:8]
+                ts = e.created_at.isoformat()[:19]
+                typer.echo(f"{tid}  {ts}  {e.status:12s}")
 
     asyncio.run(_list())
 
 
 def redteam_run(
     config: str = typer.Option("kittyconfig.yaml", "--config", "-c"),
-    dry_run: bool = typer.Option(False, "--dry-run"),
+    _dry_run: bool = typer.Option(False, "--dry-run"),
 ) -> None:
     typer.echo(f"Red-team scan from: {config}")
 
@@ -77,8 +75,8 @@ def redteam_run(
 
 
 def list_plugins(
-    category: Optional[str] = typer.Option(None, "--category", "-c"),
-    tag: Optional[str] = typer.Option(None, "--tag", "-t"),
+    category: str | None = typer.Option(None, "--category", "-c"),
+    tag: str | None = typer.Option(None, "--tag", "-t"),
 ) -> None:
     async def _list() -> None:
         from kitty.redteam.plugins import PluginRegistry
@@ -121,11 +119,12 @@ def show_plugin(plugin_id: str = typer.Argument(..., help="Plugin ID")) -> None:
 
 
 def test_provider(
-    provider_id: str = typer.Argument(..., help="Provider ID to test"),
-    measure_latency: bool = typer.Option(False, "--measure-latency"),
+    provider_id: str = typer.Argument(..., help="Provider ID to test"),  # noqa: PT028
+    measure_latency: bool = typer.Option(False, "--measure-latency"),  # noqa: PT028, ARG001
 ) -> None:
     async def _test() -> None:
         import time
+
         from kitty.providers import ProviderRegistry
 
         registry = ProviderRegistry()
@@ -135,12 +134,12 @@ def test_provider(
             provider = await registry.create(provider_id)
             response = await provider.call_api("Respond with 'OK' only.")
             elapsed = time.monotonic() - start
-            typer.echo(f"  Status:    OK")
+            typer.echo("  Status:    OK")
             typer.echo(f"  Output:    {response.output[:100]}")
             typer.echo(f"  Latency:   {elapsed:.2f}s")
         except Exception as exc:
             typer.echo(f"  Status:    ERROR — {exc}", err=True)
-            raise typer.Exit(code=1)
+            raise typer.Exit(code=1) from exc
 
     asyncio.run(_test())
 

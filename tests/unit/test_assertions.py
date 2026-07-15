@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-
 from kitty.assertions import run_assertions
-from kitty.types.eval import ProviderResponse
 from kitty.types import GradingResult
+from kitty.types.eval import ProviderResponse
 
 
 class TestAssertions:
