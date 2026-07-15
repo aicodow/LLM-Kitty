@@ -90,7 +90,7 @@ class CacheManager:
             return
 
         self._cache_dir.mkdir(parents=True, exist_ok=True)
-        self._disk = diskcache.Cache(str(self._cache_dir))
+        self._disk = diskcache.Cache(str(self._cache_dir), disk=diskcache.JSONDisk)
         logger.debug("Disk cache initialised at %s", self._cache_dir)
 
     def _init_redis(self, redis_url: str | None) -> None:
@@ -203,13 +203,16 @@ class CacheManager:
         # Disk tier.
         if self._disk is not None:
             try:
-                keys_to_delete: list[str] = []
-                for key in self._disk.iterkeys():
-                    if provider_id is None or key.startswith(provider_id + ":"):
-                        keys_to_delete.append(key)
-                for key in keys_to_delete:
-                    del self._disk[key]
-                count += len(keys_to_delete)
+                if provider_id is None:
+                    self._disk.clear()
+                    count = -1  # unknown count
+                else:
+                    prefix = f"{provider_id}:"
+                    keys = [k for k in self._disk]
+                    to_del = [k for k in keys if k.startswith(prefix)]
+                    for key in to_del:
+                        del self._disk[key]
+                    count = len(to_del)
             except Exception as exc:
                 logger.debug("Disk cache clear failed: %s", exc)
 
