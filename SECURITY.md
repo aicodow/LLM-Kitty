@@ -11,7 +11,7 @@
 
 Kitty takes security seriously. If you discover a security vulnerability, please **do not** open a public issue.
 
-**Instead, report via email**: security@kitty.dev
+**Instead, report via email**: aicodow@proton.me
 
 We will acknowledge receipt within 48 hours and provide a timeline for resolution.
 
